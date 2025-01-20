@@ -10,7 +10,7 @@ Because what we are trying to achieve is a separation between the domain code an
 
 # Usage example
 
-https://github.com/virtualitems/typescript-codebase/tree/hexagonal-example
+https://github.com/virtualitems/tshex-cli
 
 # Note!!!
 
@@ -18,7 +18,7 @@ This tool and its templates are in constant development, so be aware that some c
 
 If you have any suggestions or improvements, please let me know.
 
-https://github.com/virtualitems/typescript-codebase/issues
+https://github.com/virtualitems/tshex-cli/issues
 
 # Installation
 
