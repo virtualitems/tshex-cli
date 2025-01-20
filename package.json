@@ -1,6 +1,6 @@
 {
   "name": "tshex-cli",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "author": "https://github.com/virtualitems/",
   "description": "Typescript Hexagonal Architecture CLI",
   "type": "module",
@@ -22,9 +22,9 @@
     "typescript",
     "virtualitems"
   ],
-  "homepage": "https://github.com/virtualitems/typescript-codebase/tree/tshex-cli",
+  "homepage": "https://github.com/virtualitems/tshex-cli",
   "bugs": {
-    "url": "https://github.com/virtualitems/typescript-codebase/issues"
+    "url": "https://github.com/virtualitems/tshex-cli/issues"
   },
   "files": [
     "./build",
