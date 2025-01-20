@@ -3,7 +3,7 @@
     "node_modules"
   ],
   "include": [
-    "./source/**/*"
+    "./examples/**/*"
   ],
   "compilerOptions": {
     "target": "ES5",
@@ -14,21 +14,21 @@
     "useDefineForClassFields": true,
     "moduleDetection": "force",
     "module": "NodeNext",
-    "rootDir": "./source",
+    "rootDir": "./examples",
     "moduleResolution": "NodeNext",
     "baseUrl": "./",
     "paths": {
       "@/*": [
-        "./source/*"
+        "./examples/*"
       ]
     },
     "typeRoots": [
       "./node_modules/@types",
-      "./source/index.d.ts"
+      "./examples/index.d.ts"
     ],
     "resolveJsonModule": true,
     "allowJs": false,
-    "outDir": "./build",
+    "outDir": "./examples/dist",
     "removeComments": true,
     "isolatedModules": true,
     "esModuleInterop": true,
