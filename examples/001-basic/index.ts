@@ -1,7 +1,7 @@
 import UsersService from './application/UsersService.js';
 
-const user1 = UsersService.create(1);
-const user2 = UsersService.create(2);
+const user1 = UsersService.createUser(1);
+const user2 = UsersService.createUser(2);
 
 console.log(user1.equals(user2));
 

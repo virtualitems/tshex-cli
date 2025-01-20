@@ -47,7 +47,7 @@ export default class UsersService extends Service
 
     // public static METHODS
 
-    public static create(id: number): User
+    public static createUser(id: number): User
     {
         return new User(id);
     }
