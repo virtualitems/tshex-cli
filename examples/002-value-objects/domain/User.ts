@@ -28,7 +28,7 @@ export default class User extends Entity
 
     // protected ATTRIBUTES
 
-    protected _id: number;
+    protected _id: number | null;
     protected _email: EmailValueObject | null;
 
     // private ATTRIBUTES
@@ -41,14 +41,14 @@ export default class User extends Entity
 
     // Constructor, Getters, Setters
 
-    constructor(id: number)
+    constructor(id?: number | null)
     {
         super();
-        this._id = id;
+        this._id = id || null;
         this._email = null;
     }
 
-    public get id(): number
+    public get id(): number | null
     {
         return this._id;
     }
