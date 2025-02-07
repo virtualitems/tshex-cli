@@ -2,9 +2,10 @@
 import { program } from 'commander';
 import fs from 'fs';
 import path from 'path';
+var packageJson = JSON.parse(fs.readFileSync(path.join(import.meta.dirname, '..', 'package.json'), 'utf-8'));
 program
     .name('tshex')
-    .version('1.0.0')
+    .version(packageJson.version)
     .option('--lib <name>', 'creates a new library with it\'s shared directory')
     .option('--ctx <name>', 'creates a new context')
     .option('--cls <name>', 'creates a new class')
