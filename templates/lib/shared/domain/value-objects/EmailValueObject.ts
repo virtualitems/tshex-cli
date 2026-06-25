@@ -2,7 +2,7 @@
 
 // Same Layer
 
-import StringValueObject from './StringValueObject.js';
+import ValueObject from './ValueObject.js';
 
 import ValueError from '../errors/ValueError.js';
 
@@ -16,14 +16,16 @@ type T = string;
 
 
 /**
-* @description 
+* @description
 */
-export default class EmailValueObject extends StringValueObject
+export default class EmailValueObject extends ValueObject
 {
 
     [property: string]: unknown;
 
     // public ATTRIBUTES
+
+    public override readonly value: T;
 
     // protected ATTRIBUTES
 
@@ -36,6 +38,12 @@ export default class EmailValueObject extends StringValueObject
     // private static ATTRIBUTES
 
     // Constructor, Getters, Setters
+
+    protected constructor(value: T)
+    {
+        super();
+        this.value = value;
+    }
 
     get username(): string | undefined
     {
@@ -54,6 +62,15 @@ export default class EmailValueObject extends StringValueObject
 
     // public METHODS
 
+    public override equals(other: EmailValueObject | null | undefined): boolean
+    {
+        if (other === null || other === undefined) {
+            return false;
+        }
+
+        return this.value === other.value;
+    }
+
     // protected METHODS
 
     // private METHODS
@@ -71,10 +88,10 @@ export default class EmailValueObject extends StringValueObject
             return false;
         }
 
-        return regex.test(value as string);
+        return ('string' === typeof value) && regex.test(value as string);
     }
 
-    public static override from(value: T): EmailValueObject
+    public static from(value: T): EmailValueObject
     {
         if (!this.isValid(value)) {
             throw new ValueError(value, this.name);
