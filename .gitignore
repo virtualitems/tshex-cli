@@ -3,6 +3,7 @@
 
 # Personal
 .ignore/
+.example/
 
 # Wiki
 .wiki/

@@ -1,22 +1,15 @@
 #!/usr/bin/env node
 import { program } from 'commander';
-import fs from 'fs';
-import path from 'path';
-const packageJson = JSON.parse(fs.readFileSync(path.join(import.meta.dirname, '..', 'package.json'), 'utf-8'));
-program
-    .name('tshex')
-    .version(packageJson.version)
-    .option('--lib <name>', 'creates a new library with it\'s shared directory')
-    .option('--ctx <name>', 'creates a new context')
-    .option('--cls <name>', 'creates a new class')
-    .option('--rfc <name>', 'creates a new react functional component')
-    .option('--dir <path>', 'sets the directory to create the new item')
-    .parse(process.argv);
+import fs from 'node:fs';
+import path from 'node:path';
+function readPackageJson() {
+    return JSON.parse(fs.readFileSync(path.join(import.meta.dirname, '..', 'package.json'), 'utf-8'));
+}
 function executeCreateLib(templatesDir, libraryDir) {
     try {
         fs.cpSync(path.join(templatesDir, 'lib'), libraryDir, {
             recursive: true,
-            filter: (src) => (!src.endsWith('.gitkeep'))
+            filter: (src) => !src.endsWith('.gitkeep')
         });
         console.log('Library created successfully');
     }
@@ -28,7 +21,7 @@ function executeCreateContext(templatesDir, contextDir) {
     try {
         fs.cpSync(path.join(templatesDir, 'ctx'), contextDir, {
             recursive: true,
-            filter: (src) => (!src.endsWith('.gitkeep'))
+            filter: (src) => !src.endsWith('.gitkeep')
         });
         console.log('Context created successfully');
     }
@@ -36,25 +29,7 @@ function executeCreateContext(templatesDir, contextDir) {
         console.error(err);
     }
 }
-function executeCreateClass(templatesDir, classDir) {
-    try {
-        fs.cpSync(path.join(templatesDir, 'cls.example'), classDir, {});
-        console.log('Class created successfully');
-    }
-    catch (err) {
-        console.error(err);
-    }
-}
-function executeCreateReactFunctionalComponent(templatesDir, classDir) {
-    try {
-        fs.cpSync(path.join(templatesDir, 'rfc.example'), classDir, {});
-        console.log('React component created successfully');
-    }
-    catch (err) {
-        console.error(err);
-    }
-}
-(function () {
+function main(program) {
     const templatesDir = path.join(import.meta.dirname, '..', 'templates');
     const options = program.opts();
     let targetDir = path.resolve(options.dir ?? process.cwd());
@@ -73,12 +48,13 @@ function executeCreateReactFunctionalComponent(templatesDir, classDir) {
         targetDir = path.join(targetDir, options.ctx);
         executeCreateContext(templatesDir, targetDir);
     }
-    if (options.cls !== undefined) {
-        const target = path.join(targetDir, options.cls + '.ts');
-        executeCreateClass(templatesDir, target);
-    }
-    if (options.rfc !== undefined) {
-        const target = path.join(targetDir, options.rfc + '.tsx');
-        executeCreateReactFunctionalComponent(templatesDir, target);
-    }
-})();
+}
+const packageJson = readPackageJson();
+program
+    .name('tshex')
+    .version(packageJson.version)
+    .option('--lib <name>', "creates a new library with it's shared directory")
+    .option('--ctx <name>', 'creates a new context')
+    .option('--dir <path>', 'sets the directory to create the new item')
+    .parse(process.argv);
+main(program);
