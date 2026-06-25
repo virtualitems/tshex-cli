@@ -34,12 +34,11 @@
   "types": "./source/index.d.ts",
   "scripts": {
     "examples": "tsc -p examples",
-    "build": "tsc && tsc-alias",
+    "build": "tsc",
     "dev": "tsc -w"
   },
   "devDependencies": {
     "@types/node": "^22.5.4",
-    "tsc-alias": "^1.8.10",
     "typescript": "^5.4.5"
   },
   "dependencies": {
