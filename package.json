@@ -46,5 +46,6 @@
   },
   "bin": {
     "tshex": "./build/main.js"
-  }
+  },
+  "packageManager": "pnpm@11.5.2"
 }
