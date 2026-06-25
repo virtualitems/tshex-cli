@@ -1,12 +1,6 @@
 {
-  "exclude": [
-    "node_modules"
-  ],
-  "include": [
-    "./source/**/*"
-  ],
   "compilerOptions": {
-    "target": "ES5",
+    "target": "ES2022",
     "lib": [
       "ESNext",
       "DOM"
@@ -16,15 +10,13 @@
     "module": "NodeNext",
     "rootDir": "./source",
     "moduleResolution": "NodeNext",
-    "baseUrl": "./",
     "paths": {
       "@/*": [
         "./source/*"
       ]
     },
     "typeRoots": [
-      "./node_modules/@types",
-      "./source/index.d.ts"
+      "./node_modules/@types"
     ],
     "resolveJsonModule": true,
     "allowJs": false,
@@ -48,5 +40,11 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true
-  }
+  },
+  "exclude": [
+    "node_modules"
+  ],
+  "include": [
+    "./source/**/*"
+  ]
 }
