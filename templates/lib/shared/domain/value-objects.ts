@@ -2,7 +2,7 @@
 
 // Same Layer
 
-import { ValueError } from './errors.ts'
+import { ValueError } from './errors.js'
 
 // Lower Layers
 
