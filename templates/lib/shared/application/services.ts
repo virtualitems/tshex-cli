@@ -2,23 +2,18 @@
 
 // Same Layer
 
-import type Event from './Event.js';
-import type EventHandler from './EventHandler.js';
-
 // Lower Layers
 
 // Types
 
 // Constants
 
-
 /**
- * @description 
+ * @description
+ * function arguments are Entity
  */
-export default abstract class EventDispatcher
-{
-
-    [property: string]: unknown;
+export abstract class Service {
+    [property: string]: unknown
 
     // public ATTRIBUTES
 
@@ -36,12 +31,6 @@ export default abstract class EventDispatcher
 
     // public METHODS
 
-    public abstract subscribe(key: unknown, handler: EventHandler): void;
-
-    public abstract unsubscribe(key: unknown, handler: EventHandler): void;
-
-    public abstract dispatch(event: Event): void;
-
     // protected METHODS
 
     // private METHODS
@@ -51,5 +40,4 @@ export default abstract class EventDispatcher
     // protected static METHODS
 
     // private static METHODS
-
 } //:: class

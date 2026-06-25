@@ -8,14 +8,11 @@
 
 // Constants
 
-
 /**
-* @description 
-*/
-export default class Response
-{
-
-    [property: string]: unknown;
+ * @description
+ */
+export class HttpResponseBody {
+    [property: string]: unknown
 
     // public ATTRIBUTES
 
@@ -32,10 +29,10 @@ export default class Response
     // Constructor, Getters, Setters
 
     public constructor(
-        public readonly data: unknown,
-        public readonly error: unknown,
-        public readonly message: unknown,
-    ) { }
+        public readonly data: Record<string, unknown> | null = null,
+        public readonly errors: string[] | null = null,
+        public readonly links: Record<string, URL> | null = null
+    ) {}
 
     // public METHODS
 
@@ -48,5 +45,4 @@ export default class Response
     // protected static METHODS
 
     // private static METHODS
-
 } //:: class

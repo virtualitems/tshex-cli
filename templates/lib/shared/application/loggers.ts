@@ -8,14 +8,11 @@
 
 // Constants
 
-
 /**
-* @description 
-*/
-export default abstract class Logger
-{
-
-    [property: string]: unknown;
+ * @description
+ */
+export abstract class Logger {
+    [property: string]: unknown
 
     // public ATTRIBUTES
 
@@ -33,13 +30,13 @@ export default abstract class Logger
 
     // public METHODS
 
-    public abstract debug(message: string): void;
+    public abstract debug(data: unknown): void
 
-    public abstract info(message: string): void;
+    public abstract info(data: unknown): void
 
-    public abstract warning(message: string): void;
+    public abstract warning(data: unknown): void
 
-    public abstract error(message: string): void;
+    public abstract error(data: unknown): void
 
     // protected METHODS
 
@@ -50,5 +47,4 @@ export default abstract class Logger
     // protected static METHODS
 
     // private static METHODS
-
 } //:: class
