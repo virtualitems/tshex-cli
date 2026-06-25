@@ -42,6 +42,10 @@ export abstract class ValueObject<T = unknown> {
 
     public abstract equals(other: ValueObject<T> | null | undefined): boolean
 
+    public toString(): string {
+        return String(this.value)
+    }
+
     // protected METHODS
 
     // private METHODS
