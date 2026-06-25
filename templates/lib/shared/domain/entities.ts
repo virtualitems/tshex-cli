@@ -8,16 +8,11 @@
 
 // Constants
 
-
 /**
- * @description An Aggregate is a class that contains business logic that doesn't belong to any entity.
- * It is used to perform operations that don't fit into an entity or involve multiple entities.
- * Normally, method arguments are entities.
+ * @description An Entity is a class that represents a domain concept or element.
  */
-export default abstract class Aggregate
-{
-
-    [property: string]: unknown;
+export abstract class Entity {
+    [property: string]: unknown
 
     // public ATTRIBUTES
 
@@ -35,6 +30,10 @@ export default abstract class Aggregate
 
     // public METHODS
 
+    public abstract equals(other: Entity): boolean
+
+    public abstract toJSON(): Record<string, unknown>
+
     // protected METHODS
 
     // private METHODS
@@ -44,5 +43,4 @@ export default abstract class Aggregate
     // protected static METHODS
 
     // private static METHODS
-
 } //:: class

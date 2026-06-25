@@ -11,12 +11,10 @@
 /**
  * @description
  */
-export default abstract class ValueObject {
+export class ValueError extends Error {
     [property: string]: unknown
 
     // public ATTRIBUTES
-
-    public abstract readonly value: unknown
 
     // protected ATTRIBUTES
 
@@ -30,19 +28,17 @@ export default abstract class ValueObject {
 
     // Constructor, Getters, Setters
 
-    // public METHODS
+    public constructor(received: string, expected: string) {
+        super(`Invalid value ${received} for ${expected}.`)
+    }
 
-    public abstract equals(other: ValueObject | null | undefined): boolean
+    // public METHODS
 
     // protected METHODS
 
     // private METHODS
 
     // public static METHODS
-
-    public static isValid(value: unknown): boolean {
-        return value !== null && value !== undefined && Object.is(value, NaN) === false
-    }
 
     // protected static METHODS
 
