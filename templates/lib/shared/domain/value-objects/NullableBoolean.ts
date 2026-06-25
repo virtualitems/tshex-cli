@@ -18,7 +18,7 @@ type T = boolean | null;
 /**
 * @description 
 */
-export default class NullableBooleanValueObject extends ValueObject
+export default class NullableBoolean extends ValueObject
 {
 
     [property: string]: unknown;
@@ -47,7 +47,7 @@ export default class NullableBooleanValueObject extends ValueObject
 
     // public METHODS
 
-    public override equals(other: NullableBooleanValueObject | null | undefined): boolean
+    public override equals(other: NullableBoolean | null | undefined): boolean
     {
         if (other === null || other === undefined) {
             return false;
@@ -72,7 +72,7 @@ export default class NullableBooleanValueObject extends ValueObject
         return (value === null) || (value === true) || (value === false);
     }
 
-    public static from(value: T): NullableBooleanValueObject
+    public static from(value: T): NullableBoolean
     {
         if (!this.isValid(value)) {
             throw new ValueError(value, this.name);
