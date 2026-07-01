@@ -92,7 +92,7 @@ program
     .option('--lib <name>', "creates a new library with it's shared directory")
     .option('--ctx <name>', 'creates a new context')
     .option('--dir <path>', 'sets the directory to create the new item')
-    .option('--react', 'creates a new React context')
+    .option('--react <name>', 'creates a new React context')
     .parse(process.argv)
 
 main(program)
