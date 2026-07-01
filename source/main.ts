@@ -12,19 +12,16 @@ import path from 'node:path'
 // FUNCTIONS
 
 function readPackageJson() {
-    return JSON.parse(
-        fs.readFileSync(
-            path.join(import.meta.dirname, '..', 'package.json'),
-            'utf-8'
-        )
-    )
+    const filePath = path.join(import.meta.dirname, '..', 'package.json')
+    const fileContents = fs.readFileSync(filePath, 'utf-8')
+    return JSON.parse(fileContents)
 }
 
 function executeCreateLib(templatesDir: string, libraryDir: string) {
     try {
         fs.cpSync(path.join(templatesDir, 'lib'), libraryDir, {
             recursive: true,
-            filter: (src) => !src.endsWith('.gitkeep')
+            filter: (src) => src.endsWith('.gitkeep') === false
         })
         console.log('Library created successfully')
     } catch (err) {
@@ -36,9 +33,21 @@ function executeCreateContext(templatesDir: string, contextDir: string) {
     try {
         fs.cpSync(path.join(templatesDir, 'ctx'), contextDir, {
             recursive: true,
-            filter: (src) => !src.endsWith('.gitkeep')
+            filter: (src) => src.endsWith('.gitkeep') === false
         })
         console.log('Context created successfully')
+    } catch (err) {
+        console.error(err)
+    }
+}
+
+function executeCreateReactContext(templatesDir: string, contextDir: string) {
+    try {
+        fs.cpSync(path.join(templatesDir, 'ctx-react'), contextDir, {
+            recursive: true,
+            filter: (src) => src.endsWith('.gitkeep') === false
+        })
+        console.log('React context created successfully')
     } catch (err) {
         console.error(err)
     }
@@ -56,7 +65,7 @@ function main(program: typeof import('commander').program) {
         return
     }
 
-    if (!fs.existsSync(targetDir)) {
+    if (fs.existsSync(targetDir) === false) {
         fs.mkdirSync(targetDir, { recursive: true })
     }
 
@@ -69,6 +78,11 @@ function main(program: typeof import('commander').program) {
         targetDir = path.join(targetDir, options.ctx)
         executeCreateContext(templatesDir, targetDir)
     }
+
+    if (options.react !== undefined) {
+        targetDir = path.join(targetDir, options.react)
+        executeCreateReactContext(templatesDir, targetDir)
+    }
 }
 
 const packageJson = readPackageJson()
@@ -79,6 +93,7 @@ program
     .option('--lib <name>', "creates a new library with it's shared directory")
     .option('--ctx <name>', 'creates a new context')
     .option('--dir <path>', 'sets the directory to create the new item')
+    .option('--react', 'creates a new React context')
     .parse(process.argv)
 
 main(program)
