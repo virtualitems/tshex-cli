@@ -62,7 +62,6 @@ function main(program: typeof import('commander').program) {
 
     if (Object.keys(options).length === 0) {
         program.help()
-        return
     }
 
     if (fs.existsSync(targetDir) === false) {
