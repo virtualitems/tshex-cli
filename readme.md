@@ -24,7 +24,6 @@ There are four things you can generate:
 
 - A **library** (`--lib`): the shared foundation of a project. It contains the domain and application contracts (entities, value objects, services, etc.) that the rest of the code depends on.
 - A **context** (`--ctx`): a specific business area (e.g. `users`, `billing`, `orders`). It contains the `domain/`, `application/`, and `adapters/` folders where you implement that area's logic.
-- A **React project** (`--react-project`): a full React-oriented hexagonal structure with `core/`, `dom-client/`, `dom-server/`, and `native/` folders.
 - A **React context** (`--react-context`): a React-ready context scaffold.
 
 A typical project has one library and one or more contexts inside it.
@@ -52,20 +51,19 @@ tshex --help
 ## Usage
 
 ```bash
-tshex [--lib <name>] [--ctx <name>] [--react-project <name>] [--react-context <name>] [--dir <path>]
+tshex [--lib <name>] [--ctx <name>] [--react-context <name>] [--dir <path>]
 ```
 
 | Option         | Purpose                                                            |
 | -------------- | ------------------------------------------------------------------- |
 | `--lib <name>` | Generate a library called `<name>`, based on `templates/lib`.       |
 | `--ctx <name>` | Generate a context called `<name>`, based on `templates/ctx`.       |
-| `--react-project <name>` | Generate a React project called `<name>`, based on `templates/react-project` and `templates/lib/shared`. |
 | `--react-context <name>` | Generate a React context called `<name>`, based on `templates/react-context`. |
 | `--dir <path>` | Parent directory where the library/context will be created. Defaults to the current directory. |
 | `--help`       | Show the command options.                                           |
 | `--version`    | Show the installed version.                                         |
 
-`--lib`, `--ctx`, `--react-project`, and `--react-context` can be used together in a single command. Running `tshex` without any options just prints the help text — it does not generate anything.
+`--lib`, `--ctx`, and `--react-context` can be used together in a single command. Running `tshex` without any options just prints the help text — it does not generate anything.
 
 ## Create a library
 
@@ -207,16 +205,6 @@ src/
         ├── domain/
         └── index.ts
 ```
-
-    ## Create a React project
-
-    Use this when you want the React-specific project scaffold with the shared `core/shared` contracts copied from the library template:
-
-    ```bash
-    tshex --react-project app
-    ```
-
-    This generates a `app/` folder in the current directory.
 
     ## Create a React context
 
