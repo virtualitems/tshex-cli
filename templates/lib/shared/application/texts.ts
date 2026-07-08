@@ -10,6 +10,7 @@ export function dedent(str: string): string {
     return str
         .replace(/\t/g, ' ')
         .replace(/\r?\n/g, '\n')
+        .replace(/ *\n */g, '\n')
         .trim()
         .replace(/ +/g, ' ')
 }
