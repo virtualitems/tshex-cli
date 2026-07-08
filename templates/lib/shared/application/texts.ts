@@ -1,3 +1,13 @@
+const dedentRegex = /^\s+|\s+$|[ \t]*\r?\n[ \t]*|[ \t]+/g
+
+const whitespaceOnlyRegex = /^\s+$/
+
+function replacer(match: string): string {
+    if (match.includes('\n')) return '\n'
+    if (whitespaceOnlyRegex.test(match)) return ''
+    return ' '
+}
+
 /**
  * @description Dedents a string by converting tabs to spaces,
  * removing leading and trailing whitespace,
@@ -7,10 +17,5 @@
  * @returns {string} - The dedented string
  */
 export function dedent(str: string): string {
-    return str
-        .replace(/\t/g, ' ')
-        .replace(/\r?\n/g, '\n')
-        .replace(/ *\n */g, '\n')
-        .trim()
-        .replace(/ +/g, ' ')
+    return str.replace(dedentRegex, replacer)
 }
