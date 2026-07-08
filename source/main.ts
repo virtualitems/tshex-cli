@@ -73,14 +73,18 @@ function main(program: typeof import('commander').program) {
         executeCreateLib(templatesDir, targetDir)
     }
 
-    if (options.ctx !== undefined) {
-        targetDir = path.join(targetDir, options.ctx)
-        executeCreateContext(templatesDir, targetDir)
+    if (options.react === true && options.ctx === undefined) {
+        program.error('Option --react requires --ctx <name>')
     }
 
-    if (options.reactContext !== undefined) {
-        targetDir = path.join(targetDir, options.reactContext)
-        executeCreateReactContext(templatesDir, targetDir)
+    if (options.ctx !== undefined) {
+        targetDir = path.join(targetDir, options.ctx)
+
+        if (options.react === true) {
+            executeCreateReactContext(templatesDir, targetDir)
+        } else {
+            executeCreateContext(templatesDir, targetDir)
+        }
     }
 }
 
@@ -91,8 +95,8 @@ program
     .version(packageJson.version)
     .option('--lib <name>', "creates a new library with it's shared directory")
     .option('--ctx <name>', 'creates a new context')
+    .option('-R, --react', 'creates a React context with --ctx')
     .option('--dir <path>', 'sets the directory to create the new item')
-    .option('--react-context <name>', 'creates a new React context')
     .parse(process.argv)
 
 main(program)
