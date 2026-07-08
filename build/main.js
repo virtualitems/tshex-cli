@@ -33,7 +33,7 @@ function executeCreateContext(templatesDir, contextDir) {
 }
 function executeCreateReactContext(templatesDir, contextDir) {
     try {
-        fs.cpSync(path.join(templatesDir, 'react-context'), contextDir, {
+        fs.cpSync(path.join(templatesDir, 'ctx-react'), contextDir, {
             recursive: true,
             filter: (src) => src.endsWith('.gitkeep') === false
         });
