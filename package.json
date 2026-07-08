@@ -5,6 +5,7 @@
   "description": "Typescript Hexagonal Architecture CLI",
   "type": "module",
   "main": "./build/main.js",
+  "packageManager": "pnpm@11.5.2",
   "keywords": [
     "architecture",
     "clean-architecture",
@@ -26,26 +27,23 @@
   "bugs": {
     "url": "https://github.com/virtualitems/tshex-cli/issues"
   },
+  "types": "./source/index.d.ts",
   "files": [
     "./build",
     "./source",
     "./templates"
   ],
-  "types": "./source/index.d.ts",
-  "scripts": {
-    "examples": "tsc -p examples",
-    "build": "tsc",
-    "dev": "tsc -w"
+  "bin": {
+    "tshex": "./build/main.js"
   },
-  "devDependencies": {
-    "@types/node": "^22.5.4",
-    "typescript": "^5.4.5"
+  "scripts": {
+    "build": "tsc"
   },
   "dependencies": {
     "commander": "^12.1.0"
   },
-  "bin": {
-    "tshex": "./build/main.js"
-  },
-  "packageManager": "pnpm@11.5.2"
+  "devDependencies": {
+    "@types/node": "^22.5.4",
+    "typescript": "^5.4.5"
+  }
 }
