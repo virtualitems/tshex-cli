@@ -1,34 +1,18 @@
-// Libraries
+export const DEBUG = 10
 
-// Same Layer
+export const INFO = 20
 
-// Lower Layers
+export const WARNING = 30
 
-// Types
+export const ERROR = 40
 
-// Constants
+export const CRITICAL = 50
 
 /**
  * @description
  */
 export abstract class Logger {
     [property: string]: unknown
-
-    // public ATTRIBUTES
-
-    // protected ATTRIBUTES
-
-    // private ATTRIBUTES
-
-    // public static ATTRIBUTES
-
-    // protected static ATTRIBUTES
-
-    // private static ATTRIBUTES
-
-    // Constructor, Getters, Setters
-
-    // public METHODS
 
     public abstract debug(data: unknown): void
 
@@ -38,13 +22,5 @@ export abstract class Logger {
 
     public abstract error(data: unknown): void
 
-    // protected METHODS
-
-    // private METHODS
-
-    // public static METHODS
-
-    // protected static METHODS
-
-    // private static METHODS
+    public abstract critical(data: unknown): void
 } //:: class
