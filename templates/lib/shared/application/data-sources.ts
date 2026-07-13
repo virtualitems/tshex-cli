@@ -74,7 +74,7 @@ export abstract class DatasetManager<T = Generic> extends DataManager<T> {
 
     public abstract difference(other: Array<T>): Promise<Array<T>>
 
-    public abstract symmetric_difference(other: Array<T>): Promise<Array<T>>
+    public abstract symmetricDifference(other: Array<T>): Promise<Array<T>>
 
     public abstract complement(other: Array<T>): Promise<Array<T>>
 } //:: class
