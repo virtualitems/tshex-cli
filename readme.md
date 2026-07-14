@@ -1,10 +1,16 @@
-# `tshex-cli`
+# Hexagonal Architecture CLI `tshex-cli`
 
 `tshex-cli` creates the base structure of a library organized by contexts. The structure groups shared contracts, domain concepts, use cases, and adapters into directories with defined responsibilities.
 
 In this guide, we will build a library named `core` with a context named `users`. The walkthrough starts with the CLI and continues with the implementation of each generated component.
 
 The examples in this guide are intentionally simple. They are designed to show the responsibility of each component, not to cover real infrastructure or production scenarios.
+
+## Why?
+
+Hexagonal architecture is a software design pattern that separates the core domain of the application from the external dependencies. This separation is achieved by dividing the application into layers. Each layer has a specific responsibility and interacts with the other layers in a specific way.
+
+The goal is to separate the domain code from installed dependencies. A Hexagonal Architecture framework would work against that goal, since it couples the domain code to the framework itself. That is why this CLI exists: it scaffolds the structure for you, generating a codebase you own and control, instead of a framework.
 
 ## Getting started
 
@@ -14,6 +20,12 @@ Install the package in your Node.js project:
 
 ```bash
 npm install tshex-cli
+```
+
+Or install it globally:
+
+```bash
+npm install -g tshex-cli
 ```
 
 The package registers the `tshex` executable. You can invoke it with `npx` from the project directory.
