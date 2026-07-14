@@ -1,58 +1,60 @@
 # `tshex-cli`
 
-`tshex-cli` crea la estructura base de una librería organizada por contextos. La estructura reúne contratos compartidos, conceptos de dominio, casos de uso y adaptadores en directorios con responsabilidades definidas.
+`tshex-cli` creates the base structure of a library organized by contexts. The structure groups shared contracts, domain concepts, use cases, and adapters into directories with defined responsibilities.
 
-En esta guía construiremos una librería llamada `core` con un contexto llamado `users`. El recorrido comienza con el CLI y continúa con la implementación de cada pieza generada.
+In this guide, we will build a library named `core` with a context named `users`. The walkthrough starts with the CLI and continues with the implementation of each generated component.
 
-## Primeros pasos
+The examples in this guide are intentionally simple. They are designed to show the responsibility of each component, not to cover real infrastructure or production scenarios.
 
-### Instalación
+## Getting started
 
-Instala el paquete dentro de tu proyecto Node.js:
+### Installation
+
+Install the package in your Node.js project:
 
 ```bash
 npm install tshex-cli
 ```
 
-El paquete registra el ejecutable `tshex`. Puedes invocarlo con `npx` desde el directorio del proyecto.
+The package registers the `tshex` executable. You can invoke it with `npx` from the project directory.
 
-### Ayuda
+### Help
 
-Consulta los comandos y opciones disponibles con:
+View the available commands and options with:
 
 ```bash
 npx tshex --help
 ```
 
-### Crear una librería
+### Create a library
 
-La opción `--lib` recibe el nombre del directorio raíz de la librería:
+The `--lib` option receives the name of the library's root directory:
 
 ```bash
 npx tshex --lib core
 ```
 
-En este ejemplo, `core` será el espacio que contendrá el código compartido, los contextos y la implementación principal de la librería.
+In this example, `core` will contain the shared code, the contexts, and the library's main implementation.
 
-### Crear un contexto
+### Create a context
 
-La opción `--ctx` recibe el nombre del contexto:
+The `--ctx` option receives the context name:
 
 ```bash
 npx tshex --ctx users
 ```
 
-Un contexto agrupa las reglas y operaciones de una capacidad de la aplicación. `users`, `sales`, `billing` e `inventory` son ejemplos de contextos.
+A context groups the rules and operations of an application capability. `users`, `sales`, `billing`, and `inventory` are examples of contexts.
 
-### Crear la librería y el primer contexto
+### Create the library and the first context
 
-Puedes generar ambas piezas en una sola ejecución:
+You can generate both components in a single execution:
 
 ```bash
 npx tshex --lib core --ctx users
 ```
 
-El comando crea esta estructura:
+The command creates this structure:
 
 ```text
 core/
@@ -79,39 +81,39 @@ core/
     └── index.ts
 ```
 
-### Elegir el directorio de destino
+### Choose the destination directory
 
-La opción `--dir` indica el directorio desde el cual se crea la estructura:
+The `--dir` option specifies the directory from which the structure is created:
 
 ```bash
 npx tshex --dir ./src --lib core --ctx users
 ```
 
-La librería del ejemplo queda ubicada en `src/core`.
+The example library is created at `src/core`.
 
-Para agregar un contexto a una librería existente, utiliza la librería como directorio de destino:
+To add a context to an existing library, use the library as the destination directory:
 
 ```bash
 npx tshex --dir ./core --ctx billing
 ```
 
-El contexto queda ubicado en `core/billing`.
+The context is created at `core/billing`.
 
-### Crear un contexto para React
+### Create a context for React
 
-La opción `--react` crea un contexto con directorios orientados a una aplicación React:
+The `--react` option creates a context with directories intended for a React application:
 
 ```bash
 npx tshex --ctx users --react
 ```
 
-También puedes usar su forma corta:
+You can also use its short form:
 
 ```bash
 npx tshex --ctx users -R
 ```
 
-La estructura del contexto contiene adaptadores para API, hooks y schemas, junto con aplicación, dominio y recursos de idioma:
+The context structure includes adapters for APIs, hooks, and schemas, together with application, domain, and language resources:
 
 ```text
 users/
@@ -124,19 +126,19 @@ users/
 └── languages/
 ```
 
-## Estructura de la librería
+## Library structure
 
-La librería se divide en una raíz, un directorio compartido y uno o más contextos. Cada nivel tiene una función dentro de la implementación.
+The library is divided into a root, a shared directory, and one or more contexts. Each level has a role in the implementation.
 
-### Raíz
+### Root
 
-La raíz contiene `index.d.ts` y `main.ts`.
+The root contains `index.d.ts` and `main.ts`.
 
-`index.d.ts` declara tipos disponibles para la librería. `main.ts` contiene la implementación principal y las piezas públicas que pertenecen directamente a esa entrada.
+`index.d.ts` declares the types available to the library. `main.ts` contains the main implementation and the public components that belong directly to that entry point.
 
-### Código compartido
+### Shared code
 
-El directorio `shared` contiene código utilizado por varios contextos. Aquí se ubican abstracciones, interfaces, contratos, tipos base e implementaciones puntuales con significado común dentro de la librería.
+The `shared` directory contains code used by multiple contexts. It holds abstractions, interfaces, contracts, base types, and specific implementations with a common meaning across the library.
 
 ```text
 shared/
@@ -144,11 +146,11 @@ shared/
 └── application/
 ```
 
-`shared/domain` contiene bases para modelar conceptos del negocio. `shared/application` contiene contratos para coordinar casos de uso, fuentes de datos, eventos, validaciones, respuestas HTTP y logs.
+`shared/domain` contains foundations for modeling business concepts. `shared/application` contains contracts for coordinating use cases, data sources, events, validations, HTTP responses, and logs.
 
-### Contextos
+### Contexts
 
-Un contexto representa una capacidad de la aplicación y agrupa su vocabulario, sus reglas y sus operaciones.
+A context represents an application capability and groups its vocabulary, rules, and operations.
 
 ```text
 users/
@@ -157,9 +159,9 @@ sales/
 inventory/
 ```
 
-La separación por contextos organiza una aplicación alrededor de sus capacidades. Varios contextos pueden formar parte del mismo proyecto, del mismo proceso y de la misma fuente de datos. Cada contexto conserva sus propias reglas mientras comparte las abstracciones generales de `shared`.
+Separating by context organizes an application around its capabilities. Multiple contexts can be part of the same project, process, and data source. Each context preserves its own rules while sharing the general abstractions in `shared`.
 
-Cada contexto generado contiene tres directorios:
+Each generated context contains three directories:
 
 ```text
 domain/
@@ -169,53 +171,53 @@ adapters/
 
 #### `domain`
 
-Contiene las capacidades del contexto. Una capacidad reúne conocimiento del negocio que puede utilizarse en distintos procesos: validar un correo, identificar una entidad, calcular un precio, cambiar el estado de una orden o agrupar las partes de una venta.
+Contains the context's capabilities. A capability groups business knowledge that can be used in different processes: validating an email address, identifying an entity, calculating a price, changing an order's status, or grouping the parts of a sale.
 
-Los objetos de valor, las entidades y los agregados materializan estas capacidades mediante datos, reglas y comportamiento.
+Value objects, entities, and aggregates materialize these capabilities through data, rules, and behavior.
 
 #### `application`
 
-Contiene la aplicación de las capacidades del dominio en procesos que cumplen propósitos del sistema.
+Contains the application of domain capabilities in processes that fulfill system purposes.
 
-Un servicio de aplicación combina capacidades para completar una operación. Por ejemplo, el proceso de registrar un usuario puede validar el correo, construir la entidad, guardar sus datos, publicar un evento y registrar el resultado.
+An application service combines capabilities to complete an operation. For example, the process of registering a user can validate the email address, construct the entity, save its data, publish an event, and log the result.
 
-#### Raíz del contexto
+#### Context root
 
-La raíz contiene `index.ts` y otros archivos `.ts` destinados a los puertos del contexto.
+The root contains `index.ts` and other `.ts` files intended for the context's ports.
 
-Un puerto describe una forma de comunicación entre el contexto y otro sistema. Define los datos recibidos, los datos entregados y la operación disponible en esa frontera.
+A port describes a form of communication between the context and another system. It defines the received data, the returned data, and the operation available at that boundary.
 
 #### `adapters`
 
-Contiene las integraciones que comunican el contexto con otros sistemas. Un adaptador importa un puerto, implementa la comunicación definida por ese puerto y conecta la entrada o salida externa con un proceso de aplicación.
+Contains the integrations that connect the context with other systems. An adapter imports a port, implements the communication defined by that port, and connects an external input or output to an application process.
 
-Un adaptador puede integrar un controlador HTTP, un consumidor de mensajes, un SDK, un driver, un cliente remoto, un event bus o un proveedor de logs.
+An adapter can integrate an HTTP controller, a message consumer, an SDK, a driver, a remote client, an event bus, or a logging provider.
 
-### Arquitectura por capas
+### Layered architecture
 
-La estructura se organiza en tres niveles: capacidades, procesos y comunicación.
+The structure is organized into three levels: capabilities, processes, and communication.
 
 ```text
-Sistema externo
+External system
       ↕
-Puerto + adaptador
+Port + adapter
       ↓
-  Aplicación
+  Application
       ↓
-    Dominio
+    Domain
 ```
 
-El dominio ocupa la capa interior y reúne las capacidades del contexto.
+The domain occupies the inner layer and contains the context's capabilities.
 
-La aplicación ocupa la capa intermedia y utiliza esas capacidades para construir procesos que cumplen propósitos del sistema.
+The application occupies the middle layer and uses those capabilities to build processes that fulfill system purposes.
 
-Los puertos y adaptadores ocupan la capa exterior y resuelven la comunicación entre sistemas.
+Ports and adapters occupy the outer layer and handle communication between systems.
 
-Un puerto declara la comunicación disponible en la frontera del contexto: qué datos entran, qué datos salen y qué operación se expone. Los puertos se declaran en `index.ts` o en módulos `.ts` ubicados en la raíz del contexto.
+A port declares the communication available at the context boundary: what data enters, what data leaves, and which operation is exposed. Ports are declared in `index.ts` or in `.ts` modules located at the context root.
 
-Un adaptador implementa esa comunicación. Importa el puerto correspondiente, traduce la entrada o salida externa al formato del proceso de aplicación y delega el trabajo al servicio de aplicación.
+An adapter implements that communication. It imports the corresponding port, translates external input or output into the application process format, and delegates the work to the application service.
 
-La dirección de imports sigue este recorrido:
+The import direction follows this path:
 
 ```text
 adapter → port
@@ -223,53 +225,51 @@ adapter → application
 application → domain
 ```
 
-Por ejemplo, `users/index.ts` declara el puerto `CreateUserPort`. `users/adapters/create-user-adapter.ts` importa ese puerto y conecta una solicitud externa con `users/application/create-user-service.ts`. El servicio aplica las capacidades de `Email` y `User` para completar el registro.
+For example, `users/index.ts` declares the `CreateUserPort` port. `users/adapters/create-user-adapter.ts` imports that port and connects an external request to `users/application/create-user-service.ts`. The service applies the capabilities of `Email` and `User` to complete the registration.
 
-> **Consejo:** empieza la implementación dentro del contexto y mueve una pieza a `shared` cuando su significado y su uso pertenecen a varios contextos.
+> **Tip:** start the implementation inside the context and move a component to `shared` when its meaning and use belong to multiple contexts.
 
-## Tipos de la librería
+## Library types
 
 ### `index.d.ts`
 
-El archivo declara el tipo genérico:
+The file declares the generic type:
 
 ```ts
 type Generic<T = unknown> = Record<string, T>
 ```
 
-`Generic<T>` representa un objeto con claves de tipo `string` y valores de un tipo común.
+`Generic<T>` represents an object with `string` keys and values of a common type.
 
 ```ts
 const filters: Generic<string> = {
-    status: 'active',
-    country: 'CO'
+    status: 'active'
 }
 ```
 
-Cuando el tipo se omite, los valores utilizan `unknown`:
+When the type is omitted, the values use `unknown`:
 
 ```ts
 const metadata: Generic = {
-    requestId: 'req-1',
     retries: 2
 }
 ```
 
-Los contratos de fuentes de datos utilizan esta forma para representar objetos planos cuya estructura concreta será definida por cada implementación.
+Data source contracts use this form to represent plain objects whose specific structure will be defined by each implementation.
 
-## Dominio compartido
+## Shared domain
 
-El dominio comienza con conceptos pequeños y avanza hacia estructuras que reúnen varias identidades. Comenzaremos con los objetos de valor, continuaremos con las entidades y terminaremos con los agregados.
+The domain starts with small concepts and progresses toward structures that combine multiple identities. We will begin with value objects, continue with entities, and finish with aggregates.
 
-### Objetos de valor
+### Value objects
 
-Un objeto de valor representa un concepto que posee reglas, semántica o comportamiento propios. Su identidad está determinada por su valor.
+A value object represents a concept with its own rules, semantics, or behavior. Its identity is determined by its value.
 
-El archivo `shared/domain/value-objects.ts` genera la clase base `ValueObject<T>` y las implementaciones `Email` y `NullableBoolean`.
+The `shared/domain/value-objects.ts` file generates the `ValueObject<T>` base class and the `Email` and `NullableBoolean` implementations.
 
-#### Crear un correo electrónico
+#### Create an email address
 
-`Email` convierte un texto en un concepto de dominio con validación y operaciones propias:
+`Email` turns text into a domain concept with validation and its own operations:
 
 ```ts
 import { Email } from './core/shared/domain/value-objects.js'
@@ -277,53 +277,49 @@ import { Email } from './core/shared/domain/value-objects.js'
 const email = Email.from('alejandro@example.com')
 
 email.value
-email.username
 email.domain
-email.tld
-email.toString()
 ```
 
-La creación se realiza con `Email.from()`. Este método ejecuta `Email.isValid()` antes de construir la instancia.
+Creation is performed with `Email.from()`. This method runs `Email.isValid()` before constructing the instance.
 
 ```ts
 Email.isValid('alejandro@example.com')
 ```
 
-Toda creación pasa por la misma regla de validez:
+Every creation follows the same validity rule:
 
 ```text
-valor recibido
+received value
     ↓
 isValid(value)
     ↓
 from(value)
     ↓
-instancia válida
+valid instance
 ```
 
-Cuando la validación falla, `from()` lanza `ValueError`.
+When validation fails, `from()` throws `ValueError`.
 
-> **Consejo:** utiliza un tipo nativo cuando expresa completamente el dato. Crea un objeto de valor cuando el concepto aporta reglas u operaciones propias. Un identificador textual puede representarse con `string`; un correo electrónico se beneficia de `Email` porque incorpora validación y comportamiento.
+> **Tip:** use a native type when it fully expresses the data. Create a value object when the concept provides its own rules or operations. A text identifier can be represented with `string`; an email address benefits from `Email` because it includes validation and behavior.
 
-#### Representar un estado booleano nullable
+#### Represent a nullable Boolean state
 
-`NullableBoolean` modela los valores `true`, `false` y `null`:
+`NullableBoolean` models the values `true`, `false`, and `null`:
 
 ```ts
 import { NullableBoolean } from './core/shared/domain/value-objects.js'
 
-const enabled = NullableBoolean.from(true)
-const disabled = NullableBoolean.from(false)
-const indeterminate = NullableBoolean.from(null)
+const status = NullableBoolean.from(null)
 
-indeterminate.isIndeterminate()
+status.value
+status.isIndeterminate()
 ```
 
-El método `isIndeterminate()` expresa una operación propia del concepto y permite consultar el estado `null` con una intención explícita.
+The `isIndeterminate()` method expresses an operation specific to the concept and allows the `null` state to be checked with explicit intent.
 
-#### Implementar un objeto de valor
+#### Implement a value object
 
-Crearemos un porcentaje de descuento. El concepto valida su rango y aplica el porcentaje sobre una cantidad.
+We will create a discount percentage. The example has only one rule and one operation so the focus remains on the value object concept.
 
 **`sales/domain/discount-percentage.ts`**
 
@@ -342,8 +338,7 @@ export class DiscountPercentage extends ValueObject<number> {
     public override equals(
         other: DiscountPercentage | null | undefined
     ): boolean {
-        return other !== null &&
-            other !== undefined &&
+        return other instanceof DiscountPercentage &&
             this.value === other.value
     }
 
@@ -352,8 +347,8 @@ export class DiscountPercentage extends ValueObject<number> {
     }
 
     public static override isValid(value: unknown): boolean {
-        return super.isValid(value) &&
-            typeof value === 'number' &&
+        return typeof value === 'number' &&
+            Number.isFinite(value) &&
             value >= 0 &&
             value <= 100
     }
@@ -368,22 +363,22 @@ export class DiscountPercentage extends ValueObject<number> {
 }
 ```
 
-Ahora podemos crear y utilizar el concepto:
+Now we can create and use the concept:
 
 ```ts
 const discount = DiscountPercentage.from(15)
 const finalPrice = discount.applyTo(100)
 ```
 
-`isValid()` concentra las reglas de creación. `from()` aplica esas reglas. `applyTo()` aporta el comportamiento que pertenece al porcentaje.
+`isValid()` centralizes the rule. `from()` creates the valid instance. `applyTo()` adds behavior specific to the concept.
 
-### Entidades
+### Entities
 
-Una entidad representa un concepto con identidad propia. Dos instancias representan el mismo elemento cuando comparten esa identidad.
+An entity represents a concept with its own identity. Two instances represent the same element when they share that identity.
 
-El archivo `shared/domain/entities.ts` genera la clase base `Entity`. Cada entidad implementa `equals()` y `toJSON()`.
+The `shared/domain/entities.ts` file generates the `Entity` base class. Each entity implements `equals()` and `toJSON()`.
 
-Crearemos una entidad para el contexto `users`.
+We will create an entity for the `users` context.
 
 **`users/domain/user.ts`**
 
@@ -403,10 +398,6 @@ export class User extends Entity {
         super()
     }
 
-    public changeEmail(email: Email): User {
-        return new User(this.id, email, this.active)
-    }
-
     public override equals(other: Entity): boolean {
         return other instanceof User && other.id === this.id
     }
@@ -421,9 +412,9 @@ export class User extends Entity {
 }
 ```
 
-La propiedad `id` define la identidad. El método `equals()` compara entidades a partir de esa propiedad. El método `changeEmail()` expresa una operación del usuario y conserva su identidad.
+The `id` property defines the identity. The `equals()` method compares entities using that property.
 
-`toJSON()` produce la representación plana de la entidad. `JSON.stringify()` utiliza este método automáticamente:
+`toJSON()` produces a plain representation of the entity:
 
 ```ts
 const user = new User(
@@ -432,60 +423,50 @@ const user = new User(
     NullableBoolean.from(true)
 )
 
-const serialized = JSON.stringify(user)
+const json = user.toJSON()
 ```
 
-La serialización resultante utiliza los valores internos de `Email` y `NullableBoolean`.
+The result uses the internal values of `Email` and `NullableBoolean`.
 
-### Agregados
+### Aggregates
 
-Un agregado reúne varias entidades en una unidad lógica. Las operaciones del agregado dependen de todas las identidades que lo componen.
+An aggregate groups multiple entities into a logical unit. The aggregate's operations depend on all the identities that compose it.
 
-Una venta puede reunir un vendedor, un cliente, una orden y una colección de productos:
+A team can group one leader and several members:
 
 ```text
-Sale
-├── seller
-├── customer
-├── order
-└── products
+Team
+├── leader
+└── members
 ```
 
-Cada elemento conserva su propia identidad dentro de la unidad.
+Each element preserves its own identity within the unit.
 
-**`sales/domain/sale.ts`**
+**`users/domain/team.ts`**
 
 ```ts
 import { Aggregate } from '../../shared/domain/aggregates.js'
-import type { Customer } from './customer.js'
-import type { Order } from './order.js'
-import type { Product } from './product.js'
-import type { Seller } from './seller.js'
+import type { User } from './user.js'
 
-export class Sale extends Aggregate {
+export class Team extends Aggregate {
     public constructor(
-        public readonly seller: Seller,
-        public readonly customer: Customer,
-        public readonly order: Order,
-        public readonly products: Product[]
+        public readonly leader: User,
+        public readonly members: User[]
     ) {
         super()
     }
 
-    public total(): number {
-        return this.products.reduce(
-            (amount, product) => amount + product.price,
-            0
-        )
+    public size(): number {
+        return this.members.length + 1
     }
 }
 ```
 
-`Sale` representa materialmente un objeto compuesto por referencias a las entidades necesarias para ejecutar las operaciones de venta. El método `total()` opera sobre la colección de productos que forma parte del agregado.
+`Team` groups multiple `User` entities into a single logical unit. The `size()` method operates on that group.
 
-### Errores del dominio
+### Domain errors
 
-El archivo `shared/domain/errors.ts` genera `ValueError`. Este error representa un valor recibido que incumple la regla esperada.
+The `shared/domain/errors.ts` file generates `ValueError`. This error represents a received value that does not satisfy the expected rule.
 
 ```ts
 import { ValueError } from '../../shared/domain/errors.js'
@@ -495,24 +476,24 @@ if (quantity <= 0) {
 }
 ```
 
-Al estar en `shared`, `ValueError` puede utilizarse desde cualquier contexto y desde cualquier concepto del dominio que valide valores.
+Because it is in `shared`, `ValueError` can be used from any context and by any domain concept that validates values.
 
-## Aplicación compartida
+## Shared application
 
-La capa de aplicación coordina los casos de uso. Sus contratos conectan el dominio con validaciones, fuentes de datos, respuestas HTTP, logs y eventos.
+The application layer coordinates use cases. Its contracts connect the domain with validations, data sources, HTTP responses, logs, and events.
 
-### Validaciones
+### Validations
 
-El archivo `shared/application/validations.ts` declara el contrato `Validatable`:
+The `shared/application/validations.ts` file declares the `Validatable` contract:
 
 ```ts
 isValid(): boolean
 validate(): unknown
 ```
 
-`isValid()` consulta el estado de la validación. `validate()` ejecuta la validación y devuelve el resultado definido por la implementación.
+`isValid()` checks the validation state. `validate()` performs the validation and returns the result defined by the implementation.
 
-Crearemos una validación para el caso de uso que registra usuarios.
+We will create a validation for the use case that registers users.
 
 **`users/application/create-user-validation.ts`**
 
@@ -535,15 +516,15 @@ export class CreateUserValidation implements Validatable {
 }
 ```
 
-El servicio de aplicación puede ejecutar esta validación antes de construir la entidad `User`.
+The application service can run this validation before constructing the `User` entity.
 
-### Servicios
+### Services
 
-Los servicios representan los casos de uso de la aplicación. Cada servicio aplica capacidades del dominio en un proceso que cumple un propósito, como crear un usuario, confirmar una orden o registrar un pago.
+Services represent application use cases. Each service applies domain capabilities in a process that fulfills a purpose, such as creating a user, confirming an order, or recording a payment.
 
-El archivo `shared/application/services.ts` genera la clase base `Service`. Una implementación concreta define sus entradas, sus dependencias y el método que ejecuta el proceso.
+The `shared/application/services.ts` file generates the `Service` base class. A concrete implementation defines its inputs, dependencies, and the method that executes the process.
 
-Comenzaremos con un servicio que crea un usuario.
+We will begin with a service that creates a user.
 
 **`users/application/create-user-service.ts`**
 
@@ -555,6 +536,10 @@ import {
 } from '../../shared/domain/value-objects.js'
 import { User } from '../domain/user.js'
 import { CreateUserValidation } from './create-user-validation.js'
+
+export interface UserWriter {
+    save(user: User): Promise<void>
+}
 
 export type CreateUserCommand = {
     id: string
@@ -568,13 +553,17 @@ export type CreatedUser = {
 }
 
 export class CreateUserService extends Service {
+    public constructor(private readonly users: UserWriter) {
+        super()
+    }
+
     public async execute(
         command: CreateUserCommand
     ): Promise<CreatedUser> {
         const validation = new CreateUserValidation(command.email)
         const errors = validation.validate()
 
-        if (errors.length > 0) {
+        if (errors.length !== 0) {
             throw new Error(errors.join(', '))
         }
 
@@ -584,30 +573,36 @@ export class CreateUserService extends Service {
             NullableBoolean.from(true)
         )
 
-        return user.toJSON() as CreatedUser
+        await this.users.save(user)
+
+        return {
+            id: user.id,
+            email: user.email.value,
+            active: user.active.value
+        }
     }
 }
 ```
 
-El servicio recibe un comando, ejecuta la validación, utiliza las capacidades del dominio y produce el resultado del proceso. Sus tipos pertenecen al proceso de aplicación y expresan la información que necesita para trabajar.
+The service receives a command, validates the input, constructs the entity, and delegates persistence. `CreateUserCommand` expresses the process input. `CreatedUser` expresses the output.
 
-### Respuestas HTTP
+### HTTP responses
 
-El archivo `shared/application/http.ts` genera `HttpResponseBody`, un cuerpo de respuesta diseñado para API REST.
+The `shared/application/http.ts` file generates `HttpResponseBody`, a response body designed for REST APIs.
 
-La clase organiza la respuesta en tres propiedades:
+The class organizes the response into three properties:
 
 ```ts
 new HttpResponseBody(data, errors, links)
 ```
 
-`data` contiene los datos de la operación y acepta `null` cuando la respuesta carece de datos:
+`data` contains the operation data and accepts `null` when the response has no data:
 
 ```ts
 const body = new HttpResponseBody({ id: 'user-1' })
 ```
 
-`errors` contiene una lista de mensajes:
+`errors` contains a list of messages:
 
 ```ts
 const body = new HttpResponseBody(
@@ -616,22 +611,19 @@ const body = new HttpResponseBody(
 )
 ```
 
-`links` contiene enlaces HATEOAS relacionados con el recurso y sus operaciones disponibles:
+`links` contains HATEOAS links related to the resource and its available operations:
 
 ```ts
 const body = new HttpResponseBody(
     { id: 'user-1' },
     null,
     {
-        self: new URL('https://api.example.com/users/user-1'),
-        orders: new URL(
-            'https://api.example.com/users/user-1/orders'
-        )
+        self: new URL('https://api.example.com/users/user-1')
     }
 )
 ```
 
-La salida plana de una entidad puede utilizarse como `data`:
+An entity's plain output can be used as `data`:
 
 ```ts
 const body = new HttpResponseBody(user.toJSON())
@@ -639,73 +631,63 @@ const body = new HttpResponseBody(user.toJSON())
 
 ### Logs
 
-El archivo `shared/application/loggers.ts` declara el contrato `Logger`. La aplicación utiliza esta abstracción para producir logs que un adaptador envía a servicios externos.
+The `shared/application/loggers.ts` file declares the `Logger` contract. The application uses this abstraction to produce logs that an adapter sends to external services.
 
-El contrato incluye los niveles `debug`, `info`, `warning`, `error` y `critical`, junto con las constantes numéricas `DEBUG`, `INFO`, `WARNING`, `ERROR` y `CRITICAL`.
+The contract includes the `debug`, `info`, `warning`, `error`, and `critical` levels, together with the numeric constants `DEBUG`, `INFO`, `WARNING`, `ERROR`, and `CRITICAL`.
 
-Crearemos un adaptador que conecta el contrato con un cliente externo.
+We will create a simple adapter that connects the contract to the console.
 
-**`users/adapters/external-logger-adapter.ts`**
+**`users/adapters/console-logger-adapter.ts`**
 
 ```ts
 import { Logger } from '../../shared/application/loggers.js'
 
-interface ExternalLogClient {
-    send(level: string, data: unknown): void
-}
-
-export class ExternalLoggerAdapter extends Logger {
-    public constructor(
-        private readonly client: ExternalLogClient
-    ) {
-        super()
-    }
-
+export class ConsoleLoggerAdapter extends Logger {
     public debug(data: unknown): void {
-        this.client.send('debug', data)
+        console.debug(data)
     }
 
     public info(data: unknown): void {
-        this.client.send('info', data)
+        console.info(data)
     }
 
     public warning(data: unknown): void {
-        this.client.send('warning', data)
+        console.warn(data)
     }
 
     public error(data: unknown): void {
-        this.client.send('error', data)
+        console.error(data)
     }
 
     public critical(data: unknown): void {
-        this.client.send('critical', data)
+        console.error(data)
     }
 }
 ```
 
-El servicio recibe `Logger` como dependencia. El adaptador traduce cada nivel al formato que entiende el proveedor.
+The service receives `Logger` as a dependency. The adapter decides where to send each level.
 
-### Eventos
+### Events
 
-El archivo `shared/application/events.ts` contiene los contratos que conectan la aplicación con un event bus.
+The `shared/application/events.ts` file contains the contracts that connect the application to an event bus.
 
-El flujo comienza con un evento, continúa con el dispatcher y termina en uno o más handlers:
+The flow starts with an event, continues through the dispatcher, and ends in one or more handlers:
 
 ```text
 Service
-    ↓ crea
+    ↓ creates
 Event
-    ↓ entrega a
+    ↓ passes to
 EventDispatcher
-    ↓ publica en
+    ↓ publishes to
 Event bus
-    ↓ ejecuta
+    ↓ executes
 EventHandler
 ```
 
-#### Evento
+#### Event
 
-`Event` representa un hecho ocurrido en la aplicación. Contiene el momento del evento y sus detalles planos.
+`Event` represents something that occurred in the application. It contains the event time and its plain details.
 
 **`users/application/user-created.ts`**
 
@@ -721,7 +703,7 @@ export class UserCreated extends Event {
 
 #### Handler
 
-`EventHandler` representa una reacción al evento.
+`EventHandler` represents a reaction to the event.
 
 **`users/application/log-user-created.ts`**
 
@@ -745,7 +727,7 @@ export class LogUserCreated extends EventHandler {
 
 #### Dispatcher
 
-`EventDispatcher` representa el contrato de interacción con el event bus. Su implementación concreta suscribe handlers, retira suscripciones y despacha eventos.
+`EventDispatcher` represents the interaction contract with the event bus. Its concrete implementation subscribes handlers, removes subscriptions, and dispatches events.
 
 ```ts
 subscribe(key, handler)
@@ -753,38 +735,38 @@ unsubscribe(key, handler)
 dispatch(event)
 ```
 
-El servicio puede recibir `EventDispatcher` y publicar `UserCreated` al completar el caso de uso.
+The service can receive `EventDispatcher` and publish `UserCreated` after completing the use case.
 
-## Fuentes de datos
+## Data sources
 
-El archivo `shared/application/data-sources.ts` organiza el acceso a una fuente de datos en cuatro piezas: `DriverManager`, `DataManager`, `DatasetManager` y `Repository`.
+The `shared/application/data-sources.ts` file organizes access to a data source into four components: `DriverManager`, `DataManager`, `DatasetManager`, and `Repository`.
 
-El flujo completo se ve así:
+The complete flow looks like this:
 
 ```text
 DriverManager
-    ↓ conecta y habilita
-DataManager o DatasetManager
-    ↓ entrega datos planos a
+    ↓ connects and enables
+DataManager or DatasetManager
+    ↓ provides plain data to
 Repository
-    ↓ transforma
-Objetos de dominio
-    ↓ utiliza
+    ↓ transforms
+Domain objects
+    ↓ used by
 Service
 ```
 
-Comenzaremos en la conexión y avanzaremos hasta el caso de uso.
+We will begin with the connection and proceed to the use case.
 
 ### Driver manager
 
-`DriverManager` conecta y desconecta la fuente mediante un driver. Cuando la conexión está disponible, `connect()` devuelve un data manager habilitado.
+`DriverManager` connects and disconnects the source through a driver. When the connection is available, `connect()` returns an enabled data manager.
 
 ```ts
 connect(...args): Promise<DataManager>
 disconnect(): Promise<unknown>
 ```
 
-Crearemos un manager para una fuente de personas.
+We will create a manager for an in-memory collection of people. The example avoids a database so the focus remains on the manager's responsibility.
 
 **`users/adapters/people-driver-manager.ts`**
 
@@ -792,41 +774,50 @@ Crearemos un manager para una fuente de personas.
 import { DriverManager } from '../../shared/application/data-sources.js'
 import { PeopleDataManager } from './people-data-manager.js'
 
+export type PersonRecord = {
+    id: string
+    name: string
+}
+
 export class PeopleDriverManager
     extends DriverManager<PeopleDataManager> {
 
-    public async connect(): Promise<PeopleDataManager> {
-        return new PeopleDataManager()
+    public constructor(private readonly records: PersonRecord[]) {
+        super()
     }
 
-    public async disconnect(): Promise<void> {}
+    public async connect(): Promise<PeopleDataManager> {
+        return new PeopleDataManager(this.records)
+    }
+
+    public async disconnect(): Promise<void> {
+    }
 }
 ```
 
-La implementación concreta puede encapsular un driver de base de datos, un cliente HTTP, un sistema de archivos u otra fuente.
+The concrete implementation can encapsulate a database driver, an HTTP client, a file system, or another source.
 
 ### Data manager
 
-`DataManager` actúa sobre la fuente y trabaja con objetos planos y arrays. Su forma base define dos operaciones:
+`DataManager` operates on the source and works with plain objects and arrays. Its base form defines two operations:
 
 ```ts
 all(): Promise<Array<T>>
 none(): Array<T>
 ```
 
-`all()` obtiene los registros disponibles. `none()` crea una colección vacía tipada.
+`all()` retrieves the available records. `none()` creates an empty typed collection.
 
-Primero definiremos la forma que utiliza la fuente:
+First, we will define the shape used by the source:
 
 ```ts
 type PersonRecord = {
     id: string
     name: string
-    lastname: string
 }
 ```
 
-Ahora implementaremos el data manager.
+Now we will implement the data manager.
 
 **`users/adapters/people-data-manager.ts`**
 
@@ -836,43 +827,42 @@ import { DataManager } from '../../shared/application/data-sources.js'
 export type PersonRecord = {
     id: string
     name: string
-    lastname: string
 }
 
 export class PeopleDataManager
     extends DataManager<PersonRecord> {
 
+    public constructor(private readonly records: PersonRecord[]) {
+        super()
+    }
+
     public async all(): Promise<PersonRecord[]> {
-        return this.readFromSource()
+        return this.records
     }
 
     public none(): PersonRecord[] {
         return []
     }
-
-    private async readFromSource(): Promise<PersonRecord[]> {
-        return []
-    }
 }
 ```
 
-El data manager refleja la estructura de la fuente. En este ejemplo, `name` y `lastname` existen como campos separados.
+The data manager reflects the structure of the source. In this example, it only provides plain records.
 
-#### Operaciones de la fuente
+#### Source operations
 
-El archivo también declara interfaces para ampliar las capacidades de un data manager:
+The file also declares interfaces that extend a data manager's capabilities:
 
-| Interfaz | Operación |
+| Interface | Operation |
 | --- | --- |
-| `Filterable` | Filtra registros. |
-| `Sortable` | Ordena registros. |
-| `Creatable` | Crea registros. |
-| `Updatable` | Actualiza registros. |
-| `Deletable` | Elimina registros. |
-| `Aggregatable` | Ejecuta agregaciones. |
-| `Relatable` | Selecciona o precarga relaciones. |
+| `Filterable` | Filters records. |
+| `Sortable` | Sorts records. |
+| `Creatable` | Creates records. |
+| `Updatable` | Updates records. |
+| `Deletable` | Deletes records. |
+| `Aggregatable` | Performs aggregations. |
+| `Relatable` | Selects or preloads relationships. |
 
-Un data manager puede implementar las interfaces que necesita su fuente:
+A data manager can implement the interfaces required by its source:
 
 ```ts
 import {
@@ -887,8 +877,12 @@ export class PeopleDataManager
         Filterable<Partial<PersonRecord>>,
         Creatable<PersonRecord> {
 
+    public constructor(private readonly records: PersonRecord[]) {
+        super()
+    }
+
     public async all(): Promise<PersonRecord[]> {
-        return []
+        return this.records
     }
 
     public none(): PersonRecord[] {
@@ -897,27 +891,32 @@ export class PeopleDataManager
 
     public async filter(
         selector: Partial<PersonRecord>
-    ): Promise<Array<Partial<PersonRecord>>> {
-        return []
+    ): Promise<PersonRecord[]> {
+        return this.records.filter((record) =>
+            (selector.id === undefined || record.id === selector.id) &&
+            (selector.name === undefined || record.name === selector.name)
+        )
     }
 
-    public async create(data: PersonRecord): Promise<void> {}
+    public async create(data: PersonRecord): Promise<void> {
+        this.records.push(data)
+    }
 }
 ```
 
-También puede declarar operaciones específicas para consultas de la fuente:
+It can also declare operations specific to source queries:
 
 ```ts
-public async findActiveCustomersWithPendingOrders(): Promise<PersonRecord[]> {
-    return []
+public async findByName(name: string): Promise<PersonRecord[]> {
+    return this.filter({ name })
 }
 ```
 
-La capa de aplicación decide cuándo ejecutar estas operaciones, combina sus resultados y captura los errores producidos por la fuente.
+The application layer decides when to execute these operations, combines their results, and catches errors produced by the source.
 
 ### Dataset manager
 
-`DatasetManager` extiende `DataManager` con operaciones de conjuntos:
+`DatasetManager` extends `DataManager` with set operations:
 
 ```ts
 union()
@@ -927,11 +926,11 @@ symmetric_difference()
 complement()
 ```
 
-Esta implementación resulta útil cuando una operación trabaja con uniones, intersecciones, diferencias y complementos entre colecciones de datos.
+This implementation is useful when an operation works with unions, intersections, differences, and complements between data collections.
 
 ### Repository
 
-`Repository` actúa como intermediario entre los datos planos y los objetos de dominio.
+`Repository` acts as an intermediary between plain data and domain objects.
 
 ```text
 PersonRecord
@@ -943,7 +942,7 @@ Person
 PersonRecord
 ```
 
-La fuente del ejemplo almacena `name` y `lastname`. El dominio puede enriquecer el concepto con `fullname`.
+In this example, the source and the domain have nearly the same shape so the focus remains on the repository's role: translating between plain data and domain objects.
 
 **`users/domain/person.ts`**
 
@@ -953,9 +952,7 @@ import { Entity } from '../../shared/domain/entities.js'
 export class Person extends Entity {
     public constructor(
         public readonly id: string,
-        public readonly name: string,
-        public readonly lastname: string,
-        public readonly fullname: string
+        public readonly name: string
     ) {
         super()
     }
@@ -967,15 +964,13 @@ export class Person extends Entity {
     public override toJSON(): Record<string, unknown> {
         return {
             id: this.id,
-            name: this.name,
-            lastname: this.lastname,
-            fullname: this.fullname
+            name: this.name
         }
     }
 }
 ```
 
-Ahora implementaremos el repositorio.
+Now we will implement the repository.
 
 **`users/adapters/people-repository.ts`**
 
@@ -993,19 +988,13 @@ export class PeopleRepository
     protected transform<T = Person>(data: Generic): T {
         const record = data as PersonRecord
 
-        return new Person(
-            record.id,
-            record.name,
-            record.lastname,
-            `${record.name} ${record.lastname}`
-        ) as T
+        return new Person(record.id, record.name) as T
     }
 
     private toRecord(person: Person): PersonRecord {
         return {
             id: person.id,
-            name: person.name,
-            lastname: person.lastname
+            name: person.name
         }
     }
 
@@ -1020,23 +1009,21 @@ export class PeopleRepository
 
     public async save(person: Person): Promise<void> {
         const dataManager = await this.manager.connect()
-        const record = this.toRecord(person)
 
-        await dataManager.create(record)
+        await dataManager.create(this.toRecord(person))
     }
 }
 ```
 
-`transform()` calcula `fullname` mientras convierte el registro en una entidad. `toRecord()` prepara la forma que utiliza la fuente. El dominio obtiene una representación enriquecida y el data manager conserva una representación fiel a la fuente.
+`transform()` converts the record into an entity. `toRecord()` performs the reverse conversion.
 
-### Consultas y errores en la aplicación
+### Queries and errors in the application
 
-Los servicios de aplicación coordinan las consultas y capturan los errores de las fuentes de datos. El proceso expresa las capacidades de colaboración que necesita mediante contratos propios de la aplicación. Los adaptadores materializan esos contratos.
+Application services coordinate queries and catch errors from data sources. The process expresses the collaboration capabilities it needs through application-specific contracts. Adapters materialize those contracts.
 
 **`users/application/list-people-service.ts`**
 
 ```ts
-import { Logger } from '../../shared/application/loggers.js'
 import { Service } from '../../shared/application/services.js'
 import type { Person } from '../domain/person.js'
 
@@ -1045,37 +1032,31 @@ export interface PeopleReader {
 }
 
 export class ListPeopleService extends Service {
-    public constructor(
-        private readonly people: PeopleReader,
-        private readonly logger: Logger
-    ) {
+    public constructor(private readonly people: PeopleReader) {
         super()
     }
 
     public async execute(): Promise<Person[]> {
         try {
             return await this.people.findAll()
-        } catch (error) {
-            this.logger.error(error)
-            return []
+        } catch {
+            throw new Error('Could not list people.')
         }
     }
 }
 ```
 
-`PeopleReader` expresa la colaboración que requiere este proceso. `PeopleRepository`, ubicado en `adapters`, implementa esa colaboración y transforma los datos de la fuente en entidades `Person`.
+`PeopleReader` expresses the collaboration required by the process. `PeopleRepository`, located in `adapters`, implements that collaboration and transforms source data into `Person` entities.
 
-El servicio determina el flujo del caso de uso, interpreta el resultado y gestiona los errores de la operación.
+## Context ports
 
-## Puertos del contexto
+Ports describe communication between the context and other systems. Each port defines the shape of an interaction at the boundary: input data, output data, and the available operation.
 
-Los puertos describen la comunicación entre el contexto y otros sistemas. Cada puerto define la forma de una interacción en la frontera: datos de entrada, datos de salida y operación disponible.
+The context generates `index.ts` as the main port file and `example-ports.ts` as an example of an additional file. Adapters import the ports that define the communication they materialize.
 
-El contexto genera `index.ts` como archivo principal de puertos y `example-ports.ts` como ejemplo de un archivo adicional. Los puertos son importados por los adaptadores que materializan esa comunicación.
+### Main port
 
-### Puerto principal
-
-Declararemos la comunicación para crear un usuario directamente en `users/index.ts`.
+We will declare the communication for creating a user directly in `users/index.ts`.
 
 **`users/index.ts`**
 
@@ -1098,11 +1079,11 @@ export interface CreateUserPort {
 }
 ```
 
-`CreateUserRequest` representa la información recibida desde otro sistema. `CreateUserResponse` representa la respuesta entregada. `CreateUserPort` define la operación disponible en la frontera del contexto.
+`CreateUserRequest` represents the information received from another system. `CreateUserResponse` represents the returned response. `CreateUserPort` defines the operation available at the context boundary.
 
-### Adaptar el puerto al proceso de aplicación
+### Adapt the port to the application process
 
-El adaptador importa el puerto y el servicio. Su responsabilidad consiste en traducir la solicitud externa al comando de aplicación y transformar el resultado en la respuesta del puerto.
+The adapter imports the port and the service. Its responsibility is to translate the external request into the application command and transform the result into the port response.
 
 **`users/adapters/create-user-adapter.ts`**
 
@@ -1141,11 +1122,11 @@ export class CreateUserAdapter implements CreateUserPort {
 }
 ```
 
-El puerto expresa la comunicación. El adaptador la implementa. El servicio ejecuta el proceso. El dominio aporta las capacidades utilizadas por ese proceso.
+The port expresses the communication. The adapter implements it. The service executes the process. The domain provides the capabilities used by that process.
 
-### Puertos adicionales
+### Additional ports
 
-Un contexto puede organizar sus comunicaciones en varios archivos de la raíz. Cada archivo declara los puertos de un grupo de interacciones.
+A context can organize its communications across several files at the root. Each file declares the ports for a group of interactions.
 
 **`users/example-ports.ts`**
 
@@ -1154,7 +1135,10 @@ export type FindUserRequest = {
     id: string
 }
 
-export type FindUserResponse = Generic | null
+export type FindUserResponse = {
+    id: string
+    email: string
+} | null
 
 export interface FindUserPort {
     find(
@@ -1163,7 +1147,7 @@ export interface FindUserPort {
 }
 ```
 
-El adaptador correspondiente importa el contrato desde el archivo donde está declarado:
+The corresponding adapter imports the contract from the file where it is declared:
 
 ```ts
 import type {
@@ -1173,15 +1157,15 @@ import type {
 } from '../example-ports.js'
 ```
 
-> **Consejo:** agrupa en un mismo archivo los puertos que forman una comunicación coherente. Usa archivos adicionales cuando el contexto crece y aparecen grupos de interacciones con responsabilidades propias.
+> **Tip:** group ports that form a coherent communication in the same file. Use additional files when the context grows and groups of interactions with their own responsibilities emerge.
 
-## Implementar un contexto
+## Implement a context
 
-Ahora recorreremos una implementación completa de `users` siguiendo el orden de las capas: capacidades, proceso y comunicación.
+We will now walk through a complete implementation of `users`, following the layer order: capabilities, process, and communication.
 
-### 1. Modelar las capacidades del dominio
+### 1. Model the domain capabilities
 
-Comenzamos con los conceptos que poseen reglas y comportamiento. Para el correo utilizamos `Email`; para la identidad utilizamos `string`; para el usuario creamos una entidad.
+We begin with concepts that have rules and behavior. We use `Email` for the email address, `string` for identity, and an entity for the user.
 
 **`users/domain/user.ts`**
 
@@ -1215,11 +1199,11 @@ export class User extends Entity {
 }
 ```
 
-`Email` aporta la capacidad de validar y representar el correo. `User` aporta identidad y representación del usuario.
+`Email` provides the capability to validate and represent the email address. `User` provides user identity and representation.
 
-### 2. Implementar la validación del proceso
+### 2. Implement process validation
 
-La validación prepara la entrada utilizada por el caso de uso.
+The validation prepares the input used by the use case.
 
 **`users/application/create-user-validation.ts`**
 
@@ -1242,9 +1226,9 @@ export class CreateUserValidation implements Validatable {
 }
 ```
 
-### 3. Implementar el proceso de aplicación
+### 3. Implement the application process
 
-El servicio aplica las capacidades del dominio para cumplir el propósito de registrar un usuario.
+The service receives its collaborators as dependencies and applies domain capabilities to complete the registration.
 
 **`users/application/create-user-service.ts`**
 
@@ -1256,6 +1240,10 @@ import {
 } from '../../shared/domain/value-objects.js'
 import { User } from '../domain/user.js'
 import { CreateUserValidation } from './create-user-validation.js'
+
+export interface UserWriter {
+    save(user: User): Promise<void>
+}
 
 export type CreateUserCommand = {
     id: string
@@ -1269,13 +1257,17 @@ export type CreatedUser = {
 }
 
 export class CreateUserService extends Service {
+    public constructor(private readonly users: UserWriter) {
+        super()
+    }
+
     public async execute(
         command: CreateUserCommand
     ): Promise<CreatedUser> {
         const validation = new CreateUserValidation(command.email)
         const errors = validation.validate()
 
-        if (errors.length > 0) {
+        if (errors.length !== 0) {
             throw new Error(errors.join(', '))
         }
 
@@ -1285,16 +1277,22 @@ export class CreateUserService extends Service {
             NullableBoolean.from(true)
         )
 
-        return user.toJSON() as CreatedUser
+        await this.users.save(user)
+
+        return {
+            id: user.id,
+            email: user.email.value,
+            active: user.active.value
+        }
     }
 }
 ```
 
-El comando pertenece al proceso. El servicio coordina la validación y las capacidades `Email`, `NullableBoolean` y `User`.
+`UserWriter` declares the operation the service requires from the adapter. The flow has four steps: validate, construct the entity, save, and respond.
 
-### 4. Declarar el puerto de comunicación
+### 4. Declare the communication port
 
-El puerto define cómo otro sistema solicita la creación de un usuario.
+The port defines how another system requests user creation.
 
 **`users/index.ts`**
 
@@ -1317,9 +1315,9 @@ export interface CreateUserPort {
 }
 ```
 
-### 5. Implementar el adaptador
+### 5. Implement the adapter
 
-El adaptador importa el puerto, recibe la solicitud externa y ejecuta el proceso de aplicación.
+The adapter imports the port, receives the external request, and executes the application process.
 
 **`users/adapters/create-user-adapter.ts`**
 
@@ -1329,7 +1327,10 @@ import type {
     CreateUserRequest,
     CreateUserResponse
 } from '../index.js'
-import { CreateUserService } from '../application/create-user-service.js'
+import {
+    CreateUserService,
+    type CreateUserCommand
+} from '../application/create-user-service.js'
 
 export class CreateUserAdapter implements CreateUserPort {
     public constructor(
@@ -1339,10 +1340,12 @@ export class CreateUserAdapter implements CreateUserPort {
     public async create(
         request: CreateUserRequest
     ): Promise<CreateUserResponse> {
-        const result = await this.service.execute({
+        const command: CreateUserCommand = {
             id: request.id,
             email: request.email
-        })
+        }
+
+        const result = await this.service.execute(command)
 
         return {
             id: result.id,
@@ -1353,46 +1356,50 @@ export class CreateUserAdapter implements CreateUserPort {
 }
 ```
 
-La comunicación completa sigue este recorrido:
+The complete communication follows this path:
 
 ```text
-Solicitud externa
+External request
       ↓
 CreateUserAdapter
       ↓
 CreateUserService
       ↓
-Email + User
+Validation + Email + User
       ↓
-Respuesta externa
+     UserWriter
+      ↓
+External response
 ```
 
-### 6. Componer la implementación en `main.ts`
+### 6. Compose the implementation in `main.ts`
 
-`main.ts` reúne las implementaciones principales de la librería. La composición crea el servicio y lo entrega al adaptador.
+`main.ts` brings together the library's main implementations. The composition creates the service and provides it to the adapter.
 
 **`core/main.ts`**
 
 ```ts
 import { CreateUserService } from './users/application/create-user-service.js'
 import { CreateUserAdapter } from './users/adapters/create-user-adapter.js'
+import { InMemoryUserRepository } from './users/adapters/in-memory-user-repository.js'
 
 export class CoreApplication {
     public readonly users: CreateUserAdapter
 
     public constructor() {
-        const createUserService = new CreateUserService()
+        const users = new InMemoryUserRepository()
+        const createUserService = new CreateUserService(users)
 
         this.users = new CreateUserAdapter(createUserService)
     }
 }
 ```
 
-`CoreApplication` ofrece la implementación preparada para recibir comunicaciones mediante el adaptador.
+`CoreApplication` provides a minimal composition: a concrete repository, a service, and an adapter.
 
-### 7. Utilizar la implementación
+### 7. Use the implementation
 
-El consumidor utiliza la entrada principal de la librería y accede al adaptador preparado en `main.ts`.
+The consumer uses the library's main entry point and accesses the adapter prepared in `main.ts`.
 
 ```ts
 import { CoreApplication } from './core/main.js'
@@ -1405,26 +1412,26 @@ const result = await core.users.create({
 })
 ```
 
-El adaptador recibe la solicitud, aplica el puerto, ejecuta el servicio y entrega la respuesta.
+The adapter receives the request, applies the port, executes the service, and returns the response.
 
-## Referencia de archivos generados
+## Generated file reference
 
-| Archivo | Propósito |
+| File | Purpose |
 | --- | --- |
-| `core/index.d.ts` | Declara `Generic<T>` para objetos planos. |
-| `core/main.ts` | Contiene la implementación principal de la librería. |
-| `shared/domain/value-objects.ts` | Declara `ValueObject<T>` e implementa `Email` y `NullableBoolean`. |
-| `shared/domain/entities.ts` | Declara la base `Entity`. |
-| `shared/domain/aggregates.ts` | Declara la base `Aggregate`. |
-| `shared/domain/errors.ts` | Implementa `ValueError`. |
-| `shared/application/validations.ts` | Declara `Validatable`. |
-| `shared/application/services.ts` | Declara `Service` como base de los casos de uso. |
-| `shared/application/http.ts` | Implementa `HttpResponseBody` para respuestas REST y enlaces HATEOAS. |
-| `shared/application/loggers.ts` | Declara niveles de log y el contrato `Logger`. |
-| `shared/application/events.ts` | Declara `Event`, `EventHandler` y `EventDispatcher`. |
-| `shared/application/data-sources.ts` | Declara operaciones de fuentes, managers y repositorios. |
-| `users/index.ts` | Declara los puertos principales de comunicación del contexto. |
-| `users/example-ports.ts` | Muestra un archivo adicional de puertos de comunicación. |
-| `users/domain/` | Contiene las capacidades del contexto. |
-| `users/application/` | Contiene procesos que aplican las capacidades del dominio para cumplir propósitos. |
-| `users/adapters/` | Contiene integraciones que importan puertos y comunican el contexto con otros sistemas. |
+| `core/index.d.ts` | Declares `Generic<T>` for plain objects. |
+| `core/main.ts` | Contains the library's main implementation. |
+| `shared/domain/value-objects.ts` | Declares `ValueObject<T>` and implements `Email` and `NullableBoolean`. |
+| `shared/domain/entities.ts` | Declares the `Entity` base class. |
+| `shared/domain/aggregates.ts` | Declares the `Aggregate` base class. |
+| `shared/domain/errors.ts` | Implements `ValueError`. |
+| `shared/application/validations.ts` | Declares `Validatable`. |
+| `shared/application/services.ts` | Declares `Service` as the base class for use cases. |
+| `shared/application/http.ts` | Implements `HttpResponseBody` for REST responses and HATEOAS links. |
+| `shared/application/loggers.ts` | Declares log levels and the `Logger` contract. |
+| `shared/application/events.ts` | Declares `Event`, `EventHandler`, and `EventDispatcher`. |
+| `shared/application/data-sources.ts` | Declares source operations, managers, and repositories. |
+| `users/index.ts` | Declares the context's main communication ports. |
+| `users/example-ports.ts` | Shows an additional communication port file. |
+| `users/domain/` | Contains the context's capabilities. |
+| `users/application/` | Contains processes that apply domain capabilities to fulfill purposes. |
+| `users/adapters/` | Contains integrations that import ports and connect the context with other systems. |
