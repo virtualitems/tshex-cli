@@ -24,7 +24,11 @@
     "typescript",
     "virtualitems"
   ],
-  "homepage": "https://github.com/virtualitems/tshex-cli",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/virtualitems/tshex-cli.git"
+  },
+  "homepage": "https://github.com/virtualitems/tshex-cli#readme",
   "bugs": {
     "url": "https://github.com/virtualitems/tshex-cli/issues"
   },
@@ -32,7 +36,8 @@
   "files": [
     "./build",
     "./source",
-    "./templates"
+    "./templates",
+    "./docs"
   ],
   "bin": {
     "tshex": "./build/main.js"

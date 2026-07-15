@@ -146,23 +146,23 @@ From this point on, the guide is split into dedicated documents under `docs/`.
 
 ### General
 
-- [Library structure](./docs/library-structure.md)
-- [Library types](./docs/library-types.md)
-- [Context ports](./docs/context-ports.md)
-- [Generated file reference](./docs/generated-file-reference.md)
+- [Library structure](https://github.com/virtualitems/tshex-cli/blob/main/docs/library-structure.md)
+- [Library types](https://github.com/virtualitems/tshex-cli/blob/main/docs/library-types.md)
+- [Context ports](https://github.com/virtualitems/tshex-cli/blob/main/docs/context-ports.md)
+- [Generated file reference](https://github.com/virtualitems/tshex-cli/blob/main/docs/generated-file-reference.md)
 
 ### Shared application
 
-- [shared/application/data](./docs/shared/application/data.md)
-- [shared/application/events.ts](./docs/shared/application/events.md)
-- [shared/application/http.ts](./docs/shared/application/http.md)
-- [shared/application/loggers.ts](./docs/shared/application/loggers.md)
-- [shared/application/services.ts](./docs/shared/application/services.md)
-- [shared/application/validations.ts](./docs/shared/application/validations.md)
+- [shared/application/data](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/data.md)
+- [shared/application/events.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/events.md)
+- [shared/application/http.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/http.md)
+- [shared/application/loggers.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/loggers.md)
+- [shared/application/services.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/services.md)
+- [shared/application/validations.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/validations.md)
 
 ### Shared domain
 
-- [shared/domain/aggregates.ts](./docs/shared/domain/aggregates.md)
-- [shared/domain/entities.ts](./docs/shared/domain/entities.md)
-- [shared/domain/errors.ts](./docs/shared/domain/errors.md)
-- [shared/domain/value-objects.ts](./docs/shared/domain/value-objects.md)
+- [shared/domain/aggregates.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/domain/aggregates.md)
+- [shared/domain/entities.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/domain/entities.md)
+- [shared/domain/errors.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/domain/errors.md)
+- [shared/domain/value-objects.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/domain/value-objects.md)
