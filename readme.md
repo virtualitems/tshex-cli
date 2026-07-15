@@ -148,7 +148,7 @@ The library is divided into a root, a shared directory, and one or more contexts
 
 The root contains `index.d.ts` and `main.ts`.
 
-`index.d.ts` declares the types available to the library. `main.ts` contains the main implementation and the public components that belong directly to that entry point.
+`index.d.ts` declares the types available to the library. `main.ts` starts as a placeholder for the main implementation and the public components that belong directly to that entry point.
 
 ### Shared code
 
@@ -239,7 +239,7 @@ adapter → application
 application → domain
 ```
 
-One possible arrangement is to declare a port such as `CreateUserPort` in `users/index.ts`. An adapter can import that port and connect an external request to a service such as `create-user-service.ts`. In this guide, that service uses `UserName`, `Email`, and `User` to complete the registration.
+One possible arrangement is to keep `users/example-ports.ts` at the context root and replace the starter export with your own contracts as the context grows. In this guide, the examples stay close to the generated files: value objects extend `ValueObject`, entities extend `Entity`, services extend `Service`, repositories extend `Repository`, and ports live at the context root.
 
 > **Tip:** start the implementation inside the context and move a component to `shared` when its meaning and use belong to multiple contexts.
 
@@ -360,6 +360,10 @@ export class UserName extends ValueObject<string> {
     }
 
     public static override isValid(value: unknown): boolean {
+        if (super.isValid(value) === false) {
+            return false
+        }
+
         return typeof value === 'string' &&
             value.trim().length > 0
     }
@@ -387,7 +391,7 @@ const normalized = name.normalized()
 
 An entity represents a concept with its own identity. Two instances represent the same element when they share that identity.
 
-The `shared/domain/entities.ts` file generates the `Entity` base class. Each entity implements `equals()` and `toJSON()`.
+The `shared/domain/entities.ts` file generates the `Entity` base class. Each entity implements `equals()`. The inherited `toJSON()` method can be overridden when you want to return a plain object.
 
 This example creates an entity for the `users` context.
 
@@ -432,36 +436,9 @@ The `id` property defines the identity. The `equals()` method compares entities 
 `toJSON()` produces a plain representation of the entity:
 
 ```ts
-import {
-    Email,
-    NullableBoolean
-} from '../../shared/domain/value-objects.js'
-
-type UserName = {
-    value: string
-}
-
-class User {
-    public constructor(
-        public readonly id: string,
-        public readonly name: UserName,
-        public readonly email: Email,
-        public readonly active: NullableBoolean
-    ) {}
-
-    public toJSON(): Record<string, unknown> {
-        return {
-            id: this.id,
-            name: this.name.value,
-            email: this.email.value,
-            active: this.active.value
-        }
-    }
-}
-
 const user = new User(
     'user-1',
-    { value: 'Ana' },
+    UserName.from('Ana'),
     Email.from('ana@example.com'),
     NullableBoolean.from(true)
 )
@@ -573,23 +550,13 @@ import {
     NullableBoolean
 } from '../../shared/domain/value-objects.js'
 
-type CreateUserValidationData = {
+export type CreateUserData = {
+    id: string
     name: string
     email: string
 }
 
-class CreateUserValidation implements Validatable {
-    public constructor(
-        private readonly data: CreateUserValidationData
-    ) {}
-
-    public isValid(): boolean {
-        return this.data.name.trim().length > 0 &&
-            Email.isValid(this.data.email)
-    }
-}
-
-class UserName {
+export class UserName {
     public constructor(public readonly value: string) {}
 
     public static from(value: string): UserName {
@@ -597,7 +564,7 @@ class UserName {
     }
 }
 
-class User {
+export class User {
     public constructor(
         public readonly id: string,
         public readonly name: UserName,
@@ -606,21 +573,28 @@ class User {
     ) {}
 }
 
+export class CreateUserValidation implements Validatable {
+    public constructor(
+        private readonly data: CreateUserData
+    ) {}
+
+    public isValid(): boolean {
+        return this.data.name.trim().length > 0 &&
+            Email.isValid(this.data.email)
+    }
+}
+
 export interface UserWriter {
-    save(user: User): Promise<void>
+    save(data: { user: User }): Promise<void>
 }
 
-export type CreateUserCommand = {
-    id: string
-    name: string
-    email: string
-}
-
-export type CreatedUser = {
-    id: string
-    name: string
-    email: string
-    active: boolean | null
+export type CreateUserResult = {
+    user: {
+        id: string
+        name: string
+        email: string
+        active: boolean | null
+    }
 }
 
 export class CreateUserService extends Service {
@@ -628,38 +602,35 @@ export class CreateUserService extends Service {
         super()
     }
 
-    public async execute(
-        command: CreateUserCommand
-    ): Promise<CreatedUser> {
-        const validation = new CreateUserValidation({
-            name: command.name,
-            email: command.email
-        })
+    public async execute(data: CreateUserData): Promise<CreateUserResult> {
+        const validation = new CreateUserValidation(data)
 
         if (validation.isValid() === false) {
             throw new Error('The name or email is invalid.')
         }
 
         const user = new User(
-            command.id,
-            UserName.from(command.name),
-            Email.from(command.email),
+            data.id,
+            UserName.from(data.name),
+            Email.from(data.email),
             NullableBoolean.from(true)
         )
 
-        await this.users.save(user)
+        await this.users.save({ user })
 
         return {
-            id: user.id,
-            name: user.name.value,
-            email: user.email.value,
-            active: user.active.value
+            user: {
+                id: user.id,
+                name: user.name.value,
+                email: user.email.value,
+                active: user.active.value
+            }
         }
     }
 }
 ```
 
-In this example, the service receives a command, validates the input, constructs the entity, and delegates persistence. `CreateUserCommand` is one possible input shape, and `CreatedUser` is one possible output shape.
+In this example, the service receives one object, validates it, constructs the entity, delegates persistence, and returns another object with the result.
 
 ### HTTP responses
 
@@ -789,8 +760,8 @@ EventHandler
 import { Event } from '../../shared/application/events.js'
 
 export class UserCreated extends Event {
-    public constructor(userId: string) {
-        super(Date.now(), { userId })
+    public constructor(details: { userId: string }) {
+        super(Date.now(), details)
     }
 }
 ```
@@ -862,6 +833,7 @@ We will create an adapter for an in-memory collection of users. This example avo
 
 ```ts
 import { DriverAdapter } from '../../shared/application/data/drivers.js'
+import { DataManager } from '../../shared/application/data/managers.js'
 
 type UserRecord = {
     id: string
@@ -870,8 +842,10 @@ type UserRecord = {
     active: boolean | null
 }
 
-class UserDataManager {
-    public constructor(private readonly records: UserRecord[]) {}
+class UserDataManager extends DataManager<UserRecord> {
+    public constructor(private readonly records: UserRecord[]) {
+        super()
+    }
 
     public async all(): Promise<UserRecord[]> {
         return this.records
@@ -898,14 +872,14 @@ The concrete implementation can encapsulate a database driver, an HTTP client, a
 
 ### Data manager
 
-`DataManager` operates on the source and works with plain objects and arrays. Its base form defines two operations:
+`DataManager` operates on the source and works with plain objects and arrays. Its base form exposes one abstract operation and one default operation:
 
 ```ts
 all(): Promise<Array<T>>
 none(): Array<T>
 ```
 
-`all()` retrieves the available records. `none()` creates an empty typed collection.
+`all()` retrieves the available records. `none()` already creates an empty typed collection.
 
 First, we will define the shape used by the source:
 
@@ -939,10 +913,6 @@ export class UserDataManager
 
     public async all(): Promise<UserRecord[]> {
         return this.records
-    }
-
-    public none(): UserRecord[] {
-        return []
     }
 }
 ```
@@ -986,10 +956,6 @@ export class UserDataManager
         return this.records
     }
 
-    public none(): UserRecord[] {
-        return []
-    }
-
     public async filter(
         selector: Partial<UserRecord>
     ): Promise<UserRecord[]> {
@@ -1008,8 +974,8 @@ export class UserDataManager
 It can also declare operations specific to source queries:
 
 ```ts
-public async findByEmail(email: string): Promise<UserRecord[]> {
-    return this.filter({ email })
+public async findByEmail(query: { email: string }): Promise<UserRecord[]> {
+    return this.filter({ email: query.email })
 }
 ```
 
@@ -1037,22 +1003,15 @@ This implementation is useful when an operation works with unions, intersections
 UserRecord
     ↓ transform
 User
-
-User
-    ↓ toRecord
-UserRecord
 ```
 
-In this example, the source and the domain have nearly the same shape so the focus stays on the repository's role: translating between plain data and domain objects.
+The generated base class focuses on reading plain data and transforming it into domain objects. Using the `UserDriverAdapter` from the previous example, a repository can stay very small.
 
 Now we will implement the repository.
 
 ```ts
 import { DriverAdapter } from '../../shared/application/data/drivers.js'
-import {
-    Creatable,
-    DataManager
-} from '../../shared/application/data/managers.js'
+import { DataManager } from '../../shared/application/data/managers.js'
 import { Repository } from '../../shared/application/data/repositories.js'
 import {
     Email,
@@ -1064,10 +1023,6 @@ type UserRecord = {
     name: string
     email: string
     active: boolean | null
-}
-
-interface UsersReader {
-    findAll(): Promise<User[]>
 }
 
 class UserName {
@@ -1087,43 +1042,13 @@ class User {
     ) {}
 }
 
-class UserDataManager extends DataManager<UserRecord> {
-    public constructor(private readonly records: UserRecord[]) {
-        super()
-    }
-
-    public async all(): Promise<UserRecord[]> {
-        return this.records
-    }
-
-    public none(): UserRecord[] {
-        return []
-    }
-}
-
-class UserDriverAdapter extends DriverAdapter<UserDataManager> {
-    public constructor(private readonly records: UserRecord[]) {
-        super()
-    }
-
-    public async connect(): Promise<UserDataManager> {
-        return new UserDataManager(this.records)
-    }
-
-    public async disconnect(): Promise<void> {
-    }
-}
-
-type WritableUserDataManager =
-    DataManager<UserRecord> &
-    Creatable<UserRecord>
-
 export class UserRepository
-    extends Repository<UserRecord, User>
-    implements UsersReader {
+    extends Repository<UserRecord, User> {
 
-    public constructor(records: UserRecord[]) {
-        super(new UserDriverAdapter(records))
+    public constructor(
+        driver: DriverAdapter<DataManager<UserRecord>>
+    ) {
+        super(driver)
     }
 
     protected override transform(data: UserRecord): User {
@@ -1134,28 +1059,10 @@ export class UserRepository
             NullableBoolean.from(data.active)
         )
     }
-
-    public async findAll(): Promise<User[]> {
-        return this.all()
-    }
-
-    public async save(user: User): Promise<void> {
-        const dataManager = await this.driver.connect()
-        const writable = dataManager as WritableUserDataManager
-
-        await writable.create({
-            id: user.id,
-            name: user.name.value,
-            email: user.email.value,
-            active: user.active.value
-        })
-
-        await this.driver.disconnect()
-    }
 }
 ```
 
-Here, `transform()` converts the record into an entity. The repository constructor receives a concrete `DriverAdapter`, and the inherited `all()` method handles the connect, read, transform, and disconnect flow for this example.
+Here, `transform()` converts each record into an entity. The constructor receives any driver compatible with `DataManager<UserRecord>`, and the inherited `all()` method already handles the connect, read, transform, and disconnect flow.
 
 ### Queries and errors in the application
 
@@ -1169,7 +1076,7 @@ type User = {
 }
 
 export interface UsersReader {
-    findAll(): Promise<User[]>
+    all(): Promise<User[]>
 }
 
 export class ListUsersService extends Service {
@@ -1177,9 +1084,11 @@ export class ListUsersService extends Service {
         super()
     }
 
-    public async execute(): Promise<User[]> {
+    public async execute(): Promise<{ users: User[] }> {
         try {
-            return await this.users.findAll()
+            return {
+                users: await this.users.all()
+            }
         } catch {
             throw new Error('Could not list users.')
         }
@@ -1187,7 +1096,7 @@ export class ListUsersService extends Service {
 }
 ```
 
-`UsersReader` expresses the collaboration required by the process. `UserRepository`, located in `adapters`, implements that collaboration and transforms source data into `User` entities.
+`UsersReader` expresses the collaboration required by the process. `UserRepository`, located in `adapters`, already satisfies that collaboration through the inherited `all()` method.
 
 ## Context ports
 
@@ -1197,20 +1106,32 @@ The context generates `example-ports.ts` as a root-level starting point. As the 
 
 ### Main port
 
-If you want a main port file, you can declare the communication for creating a user at the context root.
+The generated `example-ports.ts` file is only a placeholder:
+
+```ts
+export function example(): void {
+    // ...
+}
+```
+
+You can replace it with your own root-level contract. A minimal option for creating a user is:
 
 ```ts
 export type CreateUserRequest = {
-    id: string
-    name: string
-    email: string
+    user: {
+        id: string
+        name: string
+        email: string
+    }
 }
 
 export type CreateUserResponse = {
-    id: string
-    name: string
-    email: string
-    active: boolean | null
+    user: {
+        id: string
+        name: string
+        email: string
+        active: boolean | null
+    }
 }
 
 export interface CreateUserPort {
@@ -1224,32 +1145,21 @@ export interface CreateUserPort {
 
 ### Adapt the port to the application process
 
-In this example, the adapter imports the port and the service. Its job here is to translate the external request into the application command and transform the result into the port response.
+In this example, the adapter imports the port and the service. Its job here is to translate the root-level contract into the application input object and return the service result.
 
 ```ts
-type CreateUserRequest = {
-    id: string
-    name: string
-    email: string
-}
+import type {
+    CreateUserPort,
+    CreateUserRequest,
+    CreateUserResponse
+} from '../example-ports.js'
 
-type CreateUserResponse = {
-    id: string
-    name: string
-    email: string
-    active: boolean | null
-}
-
-type CreateUserCommand = CreateUserRequest
-
-interface CreateUserPort {
-    create(
-        request: CreateUserRequest
-    ): Promise<CreateUserResponse>
-}
-
-interface CreateUserService {
-    execute(command: CreateUserCommand): Promise<CreateUserResponse>
+type CreateUserService = {
+    execute(data: {
+        id: string
+        name: string
+        email: string
+    }): Promise<CreateUserResponse>
 }
 
 export class CreateUserAdapter implements CreateUserPort {
@@ -1260,20 +1170,11 @@ export class CreateUserAdapter implements CreateUserPort {
     public async create(
         request: CreateUserRequest
     ): Promise<CreateUserResponse> {
-        const command: CreateUserCommand = {
-            id: request.id,
-            name: request.name,
-            email: request.email
-        }
-
-        const result = await this.service.execute(command)
-
-        return {
-            id: result.id,
-            name: result.name,
-            email: result.email,
-            active: result.active
-        }
+        return this.service.execute({
+            id: request.user.id,
+            name: request.user.name,
+            email: request.user.email
+        })
     }
 }
 ```
@@ -1285,15 +1186,21 @@ In this example, the port expresses the communication, the adapter implements it
 A context can organize its communications across several files at the root. Each file declares the ports for a group of interactions.
 
 ```ts
-export type ListUsersResponse = Array<{
-    id: string
-    name: string
-    email: string
+export type ListUsersRequest = {
     active: boolean | null
-}>
+}
+
+export type ListUsersResponse = {
+    users: Array<{
+        id: string
+        name: string
+        email: string
+        active: boolean | null
+    }>
+}
 
 export interface ListUsersPort {
-    list(): Promise<ListUsersResponse>
+    list(request: ListUsersRequest): Promise<ListUsersResponse>
 }
 ```
 
@@ -1313,7 +1220,7 @@ import type {
 | File | Purpose |
 | --- | --- |
 | `core/index.d.ts` | Declares `Generic<T>` for plain objects. |
-| `core/main.ts` | Placeholder for the library's main implementation and exports. |
+| `core/main.ts` | Starts as a placeholder for the library's main implementation and exports. |
 | `shared/domain/value-objects.ts` | Declares `ValueObject<T>` and implements `Email` and `NullableBoolean`. |
 | `shared/domain/entities.ts` | Declares the `Entity` base class. |
 | `shared/domain/aggregates.ts` | Declares the `Aggregate` base class. |
@@ -1326,7 +1233,7 @@ import type {
 | `shared/application/data/drivers.ts` | Declares the `DriverAdapter` contract used to connect to a data source. |
 | `shared/application/data/managers.ts` | Declares source operations together with `DataManager` and `DatasetManager`. |
 | `shared/application/data/repositories.ts` | Declares the `Repository` base class for transforming records into domain objects. |
-| `users/example-ports.ts` | Provides a root-level starter file for declaring context ports. |
+| `users/example-ports.ts` | Provides a root-level starter file with a placeholder export for your context ports. |
 | `users/domain/` | Contains the context's capabilities. |
 | `users/application/` | Contains processes that apply domain capabilities to fulfill purposes. |
 | `users/adapters/` | Contains integrations that import ports and connect the context with other systems. |
