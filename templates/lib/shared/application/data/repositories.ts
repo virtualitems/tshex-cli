@@ -3,10 +3,17 @@ import { DriverAdapter } from './drivers.js'
 /**
  * @description Represents a data source.
  */
-export abstract class Repository<M extends DriverAdapter = DriverAdapter> {
+export abstract class Repository<
+    DataShape extends Record<string, unknown> = Record<string, unknown>,
+    EntityShape extends Record<string, unknown> = Record<string, unknown>
+> {
     [property: string]: unknown
 
-    public constructor(public readonly manager: M) {}
+    public constructor(public readonly manager: DriverAdapter) {}
 
-    protected abstract transform<T = Record<string, unknown>>(data: Record<string, unknown>): T
+    protected abstract transform(data: DataShape): EntityShape
+
+    protected transformList(data: Array<DataShape>): Array<EntityShape> {
+        return data.map(this.transform)
+    }
 } //:: class
