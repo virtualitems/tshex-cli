@@ -17,13 +17,13 @@ function readPackageJson() {
     return JSON.parse(fileContents)
 }
 
-function executeCreateLib(templatesDir: string, libraryDir: string) {
+function executeCreateProject(templatesDir: string, projectDir: string) {
     try {
-        fs.cpSync(path.join(templatesDir, 'lib'), libraryDir, {
+        fs.cpSync(path.join(templatesDir, 'lib'), projectDir, {
             recursive: true,
             filter: (src) => src.endsWith('.gitkeep') === false
         })
-        console.log('Library created successfully')
+        console.log('Project created successfully')
     } catch (err) {
         console.error(err)
     }
@@ -68,17 +68,17 @@ function main(program: typeof import('commander').program) {
         fs.mkdirSync(targetDir, { recursive: true })
     }
 
-    if (options.lib !== undefined) {
-        targetDir = path.join(targetDir, options.lib)
-        executeCreateLib(templatesDir, targetDir)
+    if (options.project !== undefined) {
+        targetDir = path.join(targetDir, options.project)
+        executeCreateProject(templatesDir, targetDir)
     }
 
-    if (options.react === true && options.ctx === undefined) {
-        program.error('Option --react requires --ctx <name>')
+    if (options.react === true && options.context === undefined) {
+        program.error('Option --react requires --context <name>')
     }
 
-    if (options.ctx !== undefined) {
-        targetDir = path.join(targetDir, options.ctx)
+    if (options.context !== undefined) {
+        targetDir = path.join(targetDir, options.context)
 
         if (options.react === true) {
             executeCreateReactContext(templatesDir, targetDir)
@@ -93,9 +93,9 @@ const packageJson = readPackageJson()
 program
     .name('tshex')
     .version(packageJson.version)
-    .option('--lib <name>', "creates a new library with it's shared directory")
-    .option('--ctx <name>', 'creates a new context')
-    .option('-R, --react', 'creates a React context with --ctx')
+    .option('-P, --project <name>', "creates a new project with it's shared directory")
+    .option('-C, --context <name>', 'creates a new context')
+    .option('-R, --react', 'creates a React context with --context')
     .option('--dir <path>', 'sets the directory to create the new item')
     .parse(process.argv)
 

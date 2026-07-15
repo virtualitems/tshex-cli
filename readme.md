@@ -1,8 +1,8 @@
 # Hexagonal Architecture CLI `tshex-cli`
 
-`tshex-cli` creates the base structure of a library organized by contexts. The structure groups shared contracts, domain concepts, use cases, and adapters into directories with defined responsibilities.
+`tshex-cli` creates the base structure of a project organized by contexts. The structure groups shared contracts, domain concepts, use cases, and adapters into directories with defined responsibilities.
 
-In this guide, we will build a library named `core` with a context named `users`. The walkthrough starts with the CLI and then explains the purpose of the generated components.
+In this guide, we will build a project named `core` with a context named `users`. The walkthrough starts with the CLI and then explains the purpose of the generated components.
 
 The examples in this guide are intentionally simple. They are designed to show the responsibility of each component, not to cover real infrastructure or production scenarios.
 
@@ -38,32 +38,44 @@ View the available commands and options with:
 npx tshex --help
 ```
 
-### Create a library
+### Create a project
 
-The `--lib` option receives the name of the library's root directory:
+The `--project` option receives the name of the project's root directory:
 
 ```bash
-npx tshex --lib core
+npx tshex --project core
 ```
 
-In this example, `core` will contain the shared code, the contexts, and the library's main implementation.
+You can also use the short form:
+
+```bash
+npx tshex -P core
+```
+
+In this example, `core` will contain the shared code, the contexts, and the project's main implementation.
 
 ### Create a context
 
-The `--ctx` option receives the context name:
+The `--context` option receives the context name:
 
 ```bash
-npx tshex --ctx users
+npx tshex --context users
+```
+
+You can also use the short form:
+
+```bash
+npx tshex -C users
 ```
 
 A context groups the rules and operations of an application capability. `users`, `sales`, `billing`, and `inventory` are examples of contexts.
 
-### Create the library and the first context
+### Create the project and the first context
 
 You can generate both components in a single execution:
 
 ```bash
-npx tshex --lib core --ctx users
+npx tshex --project core --context users
 ```
 
 The command creates this structure:
@@ -100,15 +112,15 @@ core/
 The `--dir` option specifies the directory from which the structure is created:
 
 ```bash
-npx tshex --dir ./src --lib core --ctx users
+npx tshex --dir ./src --project core --context users
 ```
 
-The example library is created at `src/core`.
+The example project is created at `src/core`.
 
-To add a context to an existing library, use the library as the destination directory:
+To add a context to an existing project, use the project as the destination directory:
 
 ```bash
-npx tshex --dir ./core --ctx billing
+npx tshex --dir ./core --context billing
 ```
 
 The context is created at `core/billing`.
@@ -122,13 +134,13 @@ A React context is a consumer by nature. It does not provide a hexagonal capabil
 Use this mode when the generated context will call APIs, validate interface data, expose hooks, compose components, and localize messages.
 
 ```bash
-npx tshex --ctx users --react
+npx tshex --context users --react
 ```
 
 You can also use its short form:
 
 ```bash
-npx tshex --ctx users -R
+npx tshex -C users -R
 ```
 
 The command creates this structure:
@@ -164,8 +176,8 @@ From this point on, the guide is split into dedicated documents under `docs/`.
 
 ### General
 
-- [Library structure](https://github.com/virtualitems/tshex-cli/blob/main/docs/library-structure.md)
-- [Library types](https://github.com/virtualitems/tshex-cli/blob/main/docs/library-types.md)
+- [Project structure](https://github.com/virtualitems/tshex-cli/blob/main/docs/library-structure.md)
+- [Project types](https://github.com/virtualitems/tshex-cli/blob/main/docs/library-types.md)
 - [Context ports](https://github.com/virtualitems/tshex-cli/blob/main/docs/context-ports.md)
 - [Generated file reference](https://github.com/virtualitems/tshex-cli/blob/main/docs/generated-file-reference.md)
 
