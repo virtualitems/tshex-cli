@@ -20,9 +20,9 @@ export abstract class Repository<
         return entities
     }
 
-    protected abstract transform(data: DataShape): EntityShape
-
     protected transformList(data: Array<DataShape>): Array<EntityShape> {
         return data.map(this.transform)
     }
+
+    protected abstract transform(data: DataShape): EntityShape
 } //:: class
