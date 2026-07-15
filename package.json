@@ -1,7 +1,8 @@
 {
   "name": "tshex-cli",
-  "version": "1.0.19",
+  "version": "1.0.20",
   "author": "https://github.com/virtualitems/",
+  "license": "MIT",
   "description": "Typescript Hexagonal Architecture CLI",
   "type": "module",
   "main": "./build/main.js",
