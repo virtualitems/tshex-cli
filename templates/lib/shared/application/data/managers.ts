@@ -56,11 +56,11 @@ export interface Relatable {
 export abstract class DataManager<T = Record<string, unknown>> {
     [property: string]: unknown
 
-    public abstract all(): Promise<Array<T>>
-
     public none(): Array<T> {
         return []
     }
+
+    public abstract all(): Promise<Array<T>>
 } //:: class
 
 /**
