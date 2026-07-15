@@ -2,7 +2,7 @@
   "bracketSpacing": true,
   "editor.formatOnSave": true,
   "endOfLine": "lf",
-  "printWidth": 80,
+  "printWidth": 100,
   "semi": false,
   "singleQuote": true,
   "tabWidth": 4,
