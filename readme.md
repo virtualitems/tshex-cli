@@ -2,7 +2,7 @@
 
 `tshex-cli` creates the base structure of a library organized by contexts. The structure groups shared contracts, domain concepts, use cases, and adapters into directories with defined responsibilities.
 
-In this guide, we will build a library named `core` with a context named `users`. The walkthrough starts with the CLI and continues with the implementation of each generated component.
+In this guide, we will build a library named `core` with a context named `users`. The walkthrough starts with the CLI and then explains the purpose of the generated components.
 
 The examples in this guide are intentionally simple. They are designed to show the responsibility of each component, not to cover real infrastructure or production scenarios.
 
@@ -239,7 +239,7 @@ adapter → application
 application → domain
 ```
 
-For example, `users/example-ports.ts` can declare a port such as `FindUserPort`. A project can also add `users/index.ts` as its main port file. `users/adapters/create-user-adapter.ts` then imports that port and connects an external request to `users/application/create-user-service.ts`. The service applies the capabilities of `Email` and `User` to complete the registration.
+One possible arrangement is to declare a port such as `CreateUserPort` in `users/index.ts`. An adapter can import that port and connect an external request to a service such as `create-user-service.ts`. In this guide, that service uses `UserName`, `Email`, and `User` to complete the registration.
 
 > **Tip:** start the implementation inside the context and move a component to `shared` when its meaning and use belong to multiple contexts.
 
@@ -288,16 +288,17 @@ The `shared/domain/value-objects.ts` file generates the `ValueObject<T>` base cl
 ```ts
 import { Email } from './core/shared/domain/value-objects.js'
 
-const email = Email.from('alejandro@example.com')
+const email = Email.from('ana@example.com')
 
 email.value
+email.username
 email.domain
 ```
 
 Creation is performed with `Email.from()`. This method runs `Email.isValid()` before constructing the instance.
 
 ```ts
-Email.isValid('alejandro@example.com')
+Email.isValid('ana@example.com')
 ```
 
 Every creation follows the same validity rule:
@@ -323,53 +324,49 @@ When validation fails, `from()` throws `ValueError`.
 ```ts
 import { NullableBoolean } from './core/shared/domain/value-objects.js'
 
-const status = NullableBoolean.from(null)
+const active = NullableBoolean.from(null)
 
-status.value
-status.isIndeterminate()
+active.value
+active.isIndeterminate()
 ```
 
 The `isIndeterminate()` method expresses an operation specific to the concept and allows the `null` state to be checked with explicit intent.
 
 #### Implement a value object
 
-We will create a discount percentage. The example has only one rule and one operation so the focus remains on the value object concept.
-
-**`sales/domain/discount-percentage.ts`**
+We will create a user name. The example has one rule and one small operation so the focus stays on the value object itself.
 
 ```ts
 import { ValueError } from '../../shared/domain/errors.js'
 import { ValueObject } from '../../shared/domain/value-objects.js'
 
-export class DiscountPercentage extends ValueObject<number> {
-    public override readonly value: number
+export class UserName extends ValueObject<string> {
+    public override readonly value: string
 
-    protected constructor(value: number) {
+    protected constructor(value: string) {
         super()
         this.value = value
     }
 
     public override equals(
-        other: DiscountPercentage | null | undefined
+        other: UserName | null | undefined
     ): boolean {
-        return other instanceof DiscountPercentage &&
+        return other instanceof UserName &&
             this.value === other.value
     }
 
-    public applyTo(amount: number): number {
-        return amount - amount * (this.value / 100)
+    public normalized(): string {
+        return this.value.trim().toLowerCase()
     }
 
     public static override isValid(value: unknown): boolean {
-        return typeof value === 'number' &&
-            Number.isFinite(value) &&
-            value >= 0 &&
-            value <= 100
+        return typeof value === 'string' &&
+            value.trim().length > 0
     }
 
-    public static from(value: number): DiscountPercentage {
+    public static from(value: string): UserName {
         if (this.isValid(value) === false) {
-            throw new ValueError(String(value), this.name)
+            throw new ValueError(value, this.name)
         }
 
         return new this(value)
@@ -380,11 +377,11 @@ export class DiscountPercentage extends ValueObject<number> {
 Now we can create and use the concept:
 
 ```ts
-const discount = DiscountPercentage.from(15)
-const finalPrice = discount.applyTo(100)
+const name = UserName.from('Ana')
+const normalized = name.normalized()
 ```
 
-`isValid()` centralizes the rule. `from()` creates the valid instance. `applyTo()` adds behavior specific to the concept.
+`isValid()` centralizes the rule. `from()` creates the valid instance. `normalized()` adds behavior specific to the concept.
 
 ### Entities
 
@@ -392,9 +389,7 @@ An entity represents a concept with its own identity. Two instances represent th
 
 The `shared/domain/entities.ts` file generates the `Entity` base class. Each entity implements `equals()` and `toJSON()`.
 
-We will create an entity for the `users` context.
-
-**`users/domain/user.ts`**
+This example creates an entity for the `users` context.
 
 ```ts
 import { Entity } from '../../shared/domain/entities.js'
@@ -403,9 +398,14 @@ import {
     NullableBoolean
 } from '../../shared/domain/value-objects.js'
 
+type UserName = {
+    value: string
+}
+
 export class User extends Entity {
     public constructor(
         public readonly id: string,
+        public readonly name: UserName,
         public readonly email: Email,
         public readonly active: NullableBoolean
     ) {
@@ -419,6 +419,7 @@ export class User extends Entity {
     public override toJSON(): Record<string, unknown> {
         return {
             id: this.id,
+            name: this.name.value,
             email: this.email.value,
             active: this.active.value
         }
@@ -431,52 +432,77 @@ The `id` property defines the identity. The `equals()` method compares entities 
 `toJSON()` produces a plain representation of the entity:
 
 ```ts
+import {
+    Email,
+    NullableBoolean
+} from '../../shared/domain/value-objects.js'
+
+type UserName = {
+    value: string
+}
+
+class User {
+    public constructor(
+        public readonly id: string,
+        public readonly name: UserName,
+        public readonly email: Email,
+        public readonly active: NullableBoolean
+    ) {}
+
+    public toJSON(): Record<string, unknown> {
+        return {
+            id: this.id,
+            name: this.name.value,
+            email: this.email.value,
+            active: this.active.value
+        }
+    }
+}
+
 const user = new User(
     'user-1',
-    Email.from('alejandro@example.com'),
+    { value: 'Ana' },
+    Email.from('ana@example.com'),
     NullableBoolean.from(true)
 )
 
 const json = user.toJSON()
 ```
 
-The result uses the internal values of `Email` and `NullableBoolean`.
+The result uses the internal values of `UserName`, `Email`, and `NullableBoolean`.
 
 ### Aggregates
 
 An aggregate groups multiple entities into a logical unit. The aggregate's operations depend on all the identities that compose it.
 
-A team can group one leader and several members:
+A user list can group several users:
 
 ```text
-Team
-├── leader
-└── members
+UserList
+└── items
 ```
 
 Each element preserves its own identity within the unit.
 
-**`users/domain/team.ts`**
-
 ```ts
 import { Aggregate } from '../../shared/domain/aggregates.js'
-import type { User } from './user.js'
 
-export class Team extends Aggregate {
-    public constructor(
-        public readonly leader: User,
-        public readonly members: User[]
-    ) {
+type User = {
+    id: string
+}
+
+export class UserList extends Aggregate {
+    public constructor(public readonly items: User[]) {
         super()
     }
 
-    public size(): number {
-        return this.members.length + 1
+    public count(): number {
+        return this.items.length
     }
 }
 ```
 
-`Team` groups multiple `User` entities into a single logical unit. The `size()` method operates on that group.
+`UserList` groups multiple `User` entities into a single logical unit. The `count()` method operates on that group.
 
 ### Domain errors
 
@@ -485,8 +511,8 @@ The `shared/domain/errors.ts` file generates `ValueError`. This error represents
 ```ts
 import { ValueError } from '../../shared/domain/errors.js'
 
-if (quantity <= 0) {
-    throw new ValueError(String(quantity), 'PositiveQuantity')
+if (userId.trim().length === 0) {
+    throw new ValueError(userId, 'UserId')
 }
 ```
 
@@ -502,35 +528,34 @@ The `shared/application/validations.ts` file declares the `Validatable` contract
 
 ```ts
 isValid(): boolean
-validate(): unknown
 ```
 
-`isValid()` checks the validation state. `validate()` performs the validation and returns the result defined by the implementation.
+`isValid()` checks whether the data is valid according to the rule defined by the implementation.
 
 We will create a validation for the use case that registers users.
-
-**`users/application/create-user-validation.ts`**
 
 ```ts
 import type { Validatable } from '../../shared/application/validations.js'
 import { Email } from '../../shared/domain/value-objects.js'
 
+export type CreateUserValidationData = {
+    name: string
+    email: string
+}
+
 export class CreateUserValidation implements Validatable {
-    public constructor(private readonly email: string) {}
+    public constructor(
+        private readonly data: CreateUserValidationData
+    ) {}
 
     public isValid(): boolean {
-        return Email.isValid(this.email)
-    }
-
-    public validate(): string[] {
-        return this.isValid()
-            ? []
-            : ['The email is invalid.']
+        return this.data.name.trim().length > 0 &&
+            Email.isValid(this.data.email)
     }
 }
 ```
 
-The application service can run this validation before constructing the `User` entity.
+In this example, the application service runs this validation before constructing the `User` entity.
 
 ### Services
 
@@ -540,16 +565,46 @@ The `shared/application/services.ts` file generates the `Service` base class. A 
 
 We will begin with a service that creates a user.
 
-**`users/application/create-user-service.ts`**
-
 ```ts
+import type { Validatable } from '../../shared/application/validations.js'
 import { Service } from '../../shared/application/services.js'
 import {
     Email,
     NullableBoolean
 } from '../../shared/domain/value-objects.js'
-import { User } from '../domain/user.js'
-import { CreateUserValidation } from './create-user-validation.js'
+
+type CreateUserValidationData = {
+    name: string
+    email: string
+}
+
+class CreateUserValidation implements Validatable {
+    public constructor(
+        private readonly data: CreateUserValidationData
+    ) {}
+
+    public isValid(): boolean {
+        return this.data.name.trim().length > 0 &&
+            Email.isValid(this.data.email)
+    }
+}
+
+class UserName {
+    public constructor(public readonly value: string) {}
+
+    public static from(value: string): UserName {
+        return new UserName(value.trim())
+    }
+}
+
+class User {
+    public constructor(
+        public readonly id: string,
+        public readonly name: UserName,
+        public readonly email: Email,
+        public readonly active: NullableBoolean
+    ) {}
+}
 
 export interface UserWriter {
     save(user: User): Promise<void>
@@ -557,11 +612,13 @@ export interface UserWriter {
 
 export type CreateUserCommand = {
     id: string
+    name: string
     email: string
 }
 
 export type CreatedUser = {
     id: string
+    name: string
     email: string
     active: boolean | null
 }
@@ -574,15 +631,18 @@ export class CreateUserService extends Service {
     public async execute(
         command: CreateUserCommand
     ): Promise<CreatedUser> {
-        const validation = new CreateUserValidation(command.email)
-        const errors = validation.validate()
+        const validation = new CreateUserValidation({
+            name: command.name,
+            email: command.email
+        })
 
-        if (errors.length !== 0) {
-            throw new Error(errors.join(', '))
+        if (validation.isValid() === false) {
+            throw new Error('The name or email is invalid.')
         }
 
         const user = new User(
             command.id,
+            UserName.from(command.name),
             Email.from(command.email),
             NullableBoolean.from(true)
         )
@@ -591,6 +651,7 @@ export class CreateUserService extends Service {
 
         return {
             id: user.id,
+            name: user.name.value,
             email: user.email.value,
             active: user.active.value
         }
@@ -598,7 +659,7 @@ export class CreateUserService extends Service {
 }
 ```
 
-The service receives a command, validates the input, constructs the entity, and delegates persistence. `CreateUserCommand` expresses the process input. `CreatedUser` expresses the output.
+In this example, the service receives a command, validates the input, constructs the entity, and delegates persistence. `CreateUserCommand` is one possible input shape, and `CreatedUser` is one possible output shape.
 
 ### HTTP responses
 
@@ -607,6 +668,8 @@ The `shared/application/http.ts` file generates lightweight HTTP contracts: `Htt
 `HttpResponseBody` is an interface organized into three properties:
 
 ```ts
+import type { HttpResponseBody } from '../../shared/application/http.js'
+
 const body: HttpResponseBody = {
     data,
     errors,
@@ -618,7 +681,10 @@ const body: HttpResponseBody = {
 
 ```ts
 const body: HttpResponseBody = {
-    data: { id: 'user-1' },
+    data: {
+        id: 'user-1',
+        name: 'Ana'
+    },
     errors: null,
     links: null
 }
@@ -638,7 +704,10 @@ const body: HttpResponseBody = {
 
 ```ts
 const body: HttpResponseBody = {
-    data: { id: 'user-1' },
+    data: {
+        id: 'user-1',
+        name: 'Ana'
+    },
     errors: null,
     links: {
         self: new URL('https://api.example.com/users/user-1')
@@ -666,8 +735,6 @@ The contract includes the `debug`, `info`, `warning`, `error`, and `critical` le
 
 We will create a simple adapter that connects the contract to the console.
 
-**`users/adapters/console-logger-adapter.ts`**
-
 ```ts
 import { Logger } from '../../shared/application/loggers.js'
 
@@ -694,7 +761,7 @@ export class ConsoleLoggerAdapter extends Logger {
 }
 ```
 
-The service receives `Logger` as a dependency. The adapter decides where to send each level.
+In this example, the service receives `Logger` as a dependency. The adapter decides where to send each level.
 
 ### Events
 
@@ -718,8 +785,6 @@ EventHandler
 
 `Event` represents something that occurred in the application. It contains the event time and its plain details.
 
-**`users/application/user-created.ts`**
-
 ```ts
 import { Event } from '../../shared/application/events.js'
 
@@ -733,8 +798,6 @@ export class UserCreated extends Event {
 #### Handler
 
 `EventHandler` represents a reaction to the event.
-
-**`users/application/log-user-created.ts`**
 
 ```ts
 import {
@@ -764,7 +827,7 @@ unsubscribe(key, handler)
 dispatch(event)
 ```
 
-The service can receive `EventDispatcher` and publish `UserCreated` after completing the use case.
+In one possible implementation, the service can receive `EventDispatcher` and publish `UserCreated` after completing the use case.
 
 ## Data sources
 
@@ -795,26 +858,35 @@ connect(...args): Promise<DataManager>
 disconnect(): Promise<unknown>
 ```
 
-We will create an adapter for an in-memory collection of people. The example avoids a database so the focus remains on the adapter's responsibility.
-
-**`users/adapters/people-driver-adapter.ts`**
+We will create an adapter for an in-memory collection of users. This example avoids a database so the focus stays on the adapter's responsibility, not on infrastructure details.
 
 ```ts
 import { DriverAdapter } from '../../shared/application/data/drivers.js'
-import {
-    PeopleDataManager,
-    type PersonRecord
-} from './people-data-manager.js'
 
-export class PeopleDriverAdapter
-    extends DriverAdapter<PeopleDataManager> {
+type UserRecord = {
+    id: string
+    name: string
+    email: string
+    active: boolean | null
+}
 
-    public constructor(private readonly records: PersonRecord[]) {
+class UserDataManager {
+    public constructor(private readonly records: UserRecord[]) {}
+
+    public async all(): Promise<UserRecord[]> {
+        return this.records
+    }
+}
+
+export class UserDriverAdapter
+    extends DriverAdapter<UserDataManager> {
+
+    public constructor(private readonly records: UserRecord[]) {
         super()
     }
 
-    public async connect(): Promise<PeopleDataManager> {
-        return new PeopleDataManager(this.records)
+    public async connect(): Promise<UserDataManager> {
+        return new UserDataManager(this.records)
     }
 
     public async disconnect(): Promise<void> {
@@ -838,42 +910,44 @@ none(): Array<T>
 First, we will define the shape used by the source:
 
 ```ts
-type PersonRecord = {
+type UserRecord = {
     id: string
     name: string
+    email: string
+    active: boolean | null
 }
 ```
 
 Now we will implement the data manager.
 
-**`users/adapters/people-data-manager.ts`**
-
 ```ts
 import { DataManager } from '../../shared/application/data/managers.js'
 
-export type PersonRecord = {
+export type UserRecord = {
     id: string
     name: string
+    email: string
+    active: boolean | null
 }
 
-export class PeopleDataManager
-    extends DataManager<PersonRecord> {
+export class UserDataManager
+    extends DataManager<UserRecord> {
 
-    public constructor(private readonly records: PersonRecord[]) {
+    public constructor(private readonly records: UserRecord[]) {
         super()
     }
 
-    public async all(): Promise<PersonRecord[]> {
+    public async all(): Promise<UserRecord[]> {
         return this.records
     }
 
-    public none(): PersonRecord[] {
+    public none(): UserRecord[] {
         return []
     }
 }
 ```
 
-The data manager reflects the structure of the source. In this example, it only provides plain records.
+The data manager reflects the structure of the source. In this example, it only exposes plain records.
 
 #### Source operations
 
@@ -898,34 +972,34 @@ import {
     Filterable
 } from '../../shared/application/data/managers.js'
 
-export class PeopleDataManager
-    extends DataManager<PersonRecord>
+export class UserDataManager
+    extends DataManager<UserRecord>
     implements
-        Filterable<Partial<PersonRecord>>,
-        Creatable<PersonRecord> {
+        Filterable<Partial<UserRecord>>,
+        Creatable<UserRecord> {
 
-    public constructor(private readonly records: PersonRecord[]) {
+    public constructor(private readonly records: UserRecord[]) {
         super()
     }
 
-    public async all(): Promise<PersonRecord[]> {
+    public async all(): Promise<UserRecord[]> {
         return this.records
     }
 
-    public none(): PersonRecord[] {
+    public none(): UserRecord[] {
         return []
     }
 
     public async filter(
-        selector: Partial<PersonRecord>
-    ): Promise<PersonRecord[]> {
+        selector: Partial<UserRecord>
+    ): Promise<UserRecord[]> {
         return this.records.filter((record) =>
             (selector.id === undefined || record.id === selector.id) &&
-            (selector.name === undefined || record.name === selector.name)
+            (selector.email === undefined || record.email === selector.email)
         )
     }
 
-    public async create(data: PersonRecord): Promise<void> {
+    public async create(data: UserRecord): Promise<void> {
         this.records.push(data)
     }
 }
@@ -934,8 +1008,8 @@ export class PeopleDataManager
 It can also declare operations specific to source queries:
 
 ```ts
-public async findByName(name: string): Promise<PersonRecord[]> {
-    return this.filter({ name })
+public async findByEmail(email: string): Promise<UserRecord[]> {
+    return this.filter({ email })
 }
 ```
 
@@ -960,85 +1034,120 @@ This implementation is useful when an operation works with unions, intersections
 `Repository` acts as an intermediary between plain data and domain objects.
 
 ```text
-PersonRecord
+UserRecord
     ↓ transform
-Person
+User
 
-Person
+User
     ↓ toRecord
-PersonRecord
+UserRecord
 ```
 
-In this example, the source and the domain have nearly the same shape so the focus remains on the repository's role: translating between plain data and domain objects.
-
-**`users/domain/person.ts`**
-
-```ts
-import { Entity } from '../../shared/domain/entities.js'
-
-export class Person extends Entity {
-    public constructor(
-        public readonly id: string,
-        public readonly name: string
-    ) {
-        super()
-    }
-
-    public override equals(other: Entity): boolean {
-        return other instanceof Person && other.id === this.id
-    }
-
-    public override toJSON(): Record<string, unknown> {
-        return {
-            id: this.id,
-            name: this.name
-        }
-    }
-}
-```
+In this example, the source and the domain have nearly the same shape so the focus stays on the repository's role: translating between plain data and domain objects.
 
 Now we will implement the repository.
 
-**`users/adapters/people-repository.ts`**
-
 ```ts
+import { DriverAdapter } from '../../shared/application/data/drivers.js'
 import {
     Creatable,
     DataManager
 } from '../../shared/application/data/managers.js'
 import { Repository } from '../../shared/application/data/repositories.js'
-import type { PeopleReader } from '../application/list-people-service.js'
-import { Person } from '../domain/person.js'
-import type { PersonRecord } from './people-data-manager.js'
-import { PeopleDriverAdapter } from './people-driver-adapter.js'
+import {
+    Email,
+    NullableBoolean
+} from '../../shared/domain/value-objects.js'
 
-type WritablePeopleDataManager =
-    DataManager<PersonRecord> &
-    Creatable<PersonRecord>
+type UserRecord = {
+    id: string
+    name: string
+    email: string
+    active: boolean | null
+}
 
-export class PeopleRepository
-    extends Repository<PersonRecord, Person>
-    implements PeopleReader {
+interface UsersReader {
+    findAll(): Promise<User[]>
+}
 
-    public constructor(records: PersonRecord[]) {
-        super(new PeopleDriverAdapter(records))
+class UserName {
+    public constructor(public readonly value: string) {}
+
+    public static from(value: string): UserName {
+        return new UserName(value)
+    }
+}
+
+class User {
+    public constructor(
+        public readonly id: string,
+        public readonly name: UserName,
+        public readonly email: Email,
+        public readonly active: NullableBoolean
+    ) {}
+}
+
+class UserDataManager extends DataManager<UserRecord> {
+    public constructor(private readonly records: UserRecord[]) {
+        super()
     }
 
-    protected override transform(data: PersonRecord): Person {
-        return new Person(data.id, data.name)
+    public async all(): Promise<UserRecord[]> {
+        return this.records
     }
 
-    public async findAll(): Promise<Person[]> {
+    public none(): UserRecord[] {
+        return []
+    }
+}
+
+class UserDriverAdapter extends DriverAdapter<UserDataManager> {
+    public constructor(private readonly records: UserRecord[]) {
+        super()
+    }
+
+    public async connect(): Promise<UserDataManager> {
+        return new UserDataManager(this.records)
+    }
+
+    public async disconnect(): Promise<void> {
+    }
+}
+
+type WritableUserDataManager =
+    DataManager<UserRecord> &
+    Creatable<UserRecord>
+
+export class UserRepository
+    extends Repository<UserRecord, User>
+    implements UsersReader {
+
+    public constructor(records: UserRecord[]) {
+        super(new UserDriverAdapter(records))
+    }
+
+    protected override transform(data: UserRecord): User {
+        return new User(
+            data.id,
+            UserName.from(data.name),
+            Email.from(data.email),
+            NullableBoolean.from(data.active)
+        )
+    }
+
+    public async findAll(): Promise<User[]> {
         return this.all()
     }
 
-    public async save(person: Person): Promise<void> {
+    public async save(user: User): Promise<void> {
         const dataManager = await this.driver.connect()
-        const writable = dataManager as WritablePeopleDataManager
+        const writable = dataManager as WritableUserDataManager
 
         await writable.create({
-            id: person.id,
-            name: person.name
+            id: user.id,
+            name: user.name.value,
+            email: user.email.value,
+            active: user.active.value
         })
 
         await this.driver.disconnect()
@@ -1046,38 +1155,39 @@ export class PeopleRepository
 }
 ```
 
-`transform()` converts the record into an entity. The repository constructor receives the concrete `DriverAdapter`, and the inherited `all()` method already handles the connect, read, transform, and disconnect flow.
+Here, `transform()` converts the record into an entity. The repository constructor receives a concrete `DriverAdapter`, and the inherited `all()` method handles the connect, read, transform, and disconnect flow for this example.
 
 ### Queries and errors in the application
 
 Application services coordinate queries and catch errors from data sources. The process expresses the collaboration capabilities it needs through application-specific contracts. Adapters materialize those contracts.
 
-**`users/application/list-people-service.ts`**
-
 ```ts
 import { Service } from '../../shared/application/services.js'
-import type { Person } from '../domain/person.js'
 
-export interface PeopleReader {
-    findAll(): Promise<Person[]>
+type User = {
+    id: string
 }
 
-export class ListPeopleService extends Service {
-    public constructor(private readonly people: PeopleReader) {
+export interface UsersReader {
+    findAll(): Promise<User[]>
+}
+
+export class ListUsersService extends Service {
+    public constructor(private readonly users: UsersReader) {
         super()
     }
 
-    public async execute(): Promise<Person[]> {
+    public async execute(): Promise<User[]> {
         try {
-            return await this.people.findAll()
+            return await this.users.findAll()
         } catch {
-            throw new Error('Could not list people.')
+            throw new Error('Could not list users.')
         }
     }
 }
 ```
 
-`PeopleReader` expresses the collaboration required by the process. `PeopleRepository`, located in `adapters`, implements that collaboration and transforms source data into `Person` entities.
+`UsersReader` expresses the collaboration required by the process. `UserRepository`, located in `adapters`, implements that collaboration and transforms source data into `User` entities.
 
 ## Context ports
 
@@ -1087,18 +1197,18 @@ The context generates `example-ports.ts` as a root-level starting point. As the 
 
 ### Main port
 
-If you want a main port file, you can declare the communication for creating a user directly in `users/index.ts`.
-
-**`users/index.ts`**
+If you want a main port file, you can declare the communication for creating a user at the context root.
 
 ```ts
 export type CreateUserRequest = {
     id: string
+    name: string
     email: string
 }
 
 export type CreateUserResponse = {
     id: string
+    name: string
     email: string
     active: boolean | null
 }
@@ -1114,20 +1224,33 @@ export interface CreateUserPort {
 
 ### Adapt the port to the application process
 
-The adapter imports the port and the service. Its responsibility is to translate the external request into the application command and transform the result into the port response.
-
-**`users/adapters/create-user-adapter.ts`**
+In this example, the adapter imports the port and the service. Its job here is to translate the external request into the application command and transform the result into the port response.
 
 ```ts
-import type {
-    CreateUserPort,
-    CreateUserRequest,
-    CreateUserResponse
-} from '../index.js'
-import {
-    CreateUserService,
-    type CreateUserCommand
-} from '../application/create-user-service.js'
+type CreateUserRequest = {
+    id: string
+    name: string
+    email: string
+}
+
+type CreateUserResponse = {
+    id: string
+    name: string
+    email: string
+    active: boolean | null
+}
+
+type CreateUserCommand = CreateUserRequest
+
+interface CreateUserPort {
+    create(
+        request: CreateUserRequest
+    ): Promise<CreateUserResponse>
+}
+
+interface CreateUserService {
+    execute(command: CreateUserCommand): Promise<CreateUserResponse>
+}
 
 export class CreateUserAdapter implements CreateUserPort {
     public constructor(
@@ -1139,6 +1262,7 @@ export class CreateUserAdapter implements CreateUserPort {
     ): Promise<CreateUserResponse> {
         const command: CreateUserCommand = {
             id: request.id,
+            name: request.name,
             email: request.email
         }
 
@@ -1146,6 +1270,7 @@ export class CreateUserAdapter implements CreateUserPort {
 
         return {
             id: result.id,
+            name: result.name,
             email: result.email,
             active: result.active
         }
@@ -1153,297 +1278,35 @@ export class CreateUserAdapter implements CreateUserPort {
 }
 ```
 
-The port expresses the communication. The adapter implements it. The service executes the process. The domain provides the capabilities used by that process.
+In this example, the port expresses the communication, the adapter implements it, the service executes the process, and the domain provides the capabilities used by that process.
 
 ### Additional ports
 
 A context can organize its communications across several files at the root. Each file declares the ports for a group of interactions.
 
-**`users/example-ports.ts`**
-
 ```ts
-export type FindUserRequest = {
+export type ListUsersResponse = Array<{
     id: string
-}
-
-export type FindUserResponse = {
-    id: string
+    name: string
     email: string
-} | null
+    active: boolean | null
+}>
 
-export interface FindUserPort {
-    find(
-        request: FindUserRequest
-    ): Promise<FindUserResponse>
+export interface ListUsersPort {
+    list(): Promise<ListUsersResponse>
 }
 ```
 
-The corresponding adapter imports the contract from the file where it is declared:
+An adapter can import the contract from the file where it is declared:
 
 ```ts
 import type {
-    FindUserPort,
-    FindUserRequest,
-    FindUserResponse
+    ListUsersPort,
+    ListUsersResponse
 } from '../example-ports.js'
 ```
 
 > **Tip:** group ports that form a coherent communication in the same file. Use additional files when the context grows and groups of interactions with their own responsibilities emerge.
-
-## Implement a context
-
-We will now walk through a complete implementation of `users`, following the layer order: capabilities, process, and communication.
-
-### 1. Model the domain capabilities
-
-We begin with concepts that have rules and behavior. We use `Email` for the email address, `string` for identity, and an entity for the user.
-
-**`users/domain/user.ts`**
-
-```ts
-import { Entity } from '../../shared/domain/entities.js'
-import {
-    Email,
-    NullableBoolean
-} from '../../shared/domain/value-objects.js'
-
-export class User extends Entity {
-    public constructor(
-        public readonly id: string,
-        public readonly email: Email,
-        public readonly active: NullableBoolean
-    ) {
-        super()
-    }
-
-    public override equals(other: Entity): boolean {
-        return other instanceof User && other.id === this.id
-    }
-
-    public override toJSON(): Record<string, unknown> {
-        return {
-            id: this.id,
-            email: this.email.value,
-            active: this.active.value
-        }
-    }
-}
-```
-
-`Email` provides the capability to validate and represent the email address. `User` provides user identity and representation.
-
-### 2. Implement process validation
-
-The validation prepares the input used by the use case.
-
-**`users/application/create-user-validation.ts`**
-
-```ts
-import type { Validatable } from '../../shared/application/validations.js'
-import { Email } from '../../shared/domain/value-objects.js'
-
-export class CreateUserValidation implements Validatable {
-    public constructor(private readonly email: string) {}
-
-    public isValid(): boolean {
-        return Email.isValid(this.email)
-    }
-
-    public validate(): string[] {
-        return this.isValid()
-            ? []
-            : ['The email is invalid.']
-    }
-}
-```
-
-### 3. Implement the application process
-
-The service receives its collaborators as dependencies and applies domain capabilities to complete the registration.
-
-**`users/application/create-user-service.ts`**
-
-```ts
-import { Service } from '../../shared/application/services.js'
-import {
-    Email,
-    NullableBoolean
-} from '../../shared/domain/value-objects.js'
-import { User } from '../domain/user.js'
-import { CreateUserValidation } from './create-user-validation.js'
-
-export interface UserWriter {
-    save(user: User): Promise<void>
-}
-
-export type CreateUserCommand = {
-    id: string
-    email: string
-}
-
-export type CreatedUser = {
-    id: string
-    email: string
-    active: boolean | null
-}
-
-export class CreateUserService extends Service {
-    public constructor(private readonly users: UserWriter) {
-        super()
-    }
-
-    public async execute(
-        command: CreateUserCommand
-    ): Promise<CreatedUser> {
-        const validation = new CreateUserValidation(command.email)
-        const errors = validation.validate()
-
-        if (errors.length !== 0) {
-            throw new Error(errors.join(', '))
-        }
-
-        const user = new User(
-            command.id,
-            Email.from(command.email),
-            NullableBoolean.from(true)
-        )
-
-        await this.users.save(user)
-
-        return {
-            id: user.id,
-            email: user.email.value,
-            active: user.active.value
-        }
-    }
-}
-```
-
-`UserWriter` declares the operation the service requires from the adapter. The flow has four steps: validate, construct the entity, save, and respond.
-
-### 4. Declare the communication port
-
-The port defines how another system requests user creation.
-
-**`users/index.ts`**
-
-```ts
-export type CreateUserRequest = {
-    id: string
-    email: string
-}
-
-export type CreateUserResponse = {
-    id: string
-    email: string
-    active: boolean | null
-}
-
-export interface CreateUserPort {
-    create(
-        request: CreateUserRequest
-    ): Promise<CreateUserResponse>
-}
-```
-
-### 5. Implement the adapter
-
-The adapter imports the port, receives the external request, and executes the application process.
-
-**`users/adapters/create-user-adapter.ts`**
-
-```ts
-import type {
-    CreateUserPort,
-    CreateUserRequest,
-    CreateUserResponse
-} from '../index.js'
-import {
-    CreateUserService,
-    type CreateUserCommand
-} from '../application/create-user-service.js'
-
-export class CreateUserAdapter implements CreateUserPort {
-    public constructor(
-        private readonly service: CreateUserService
-    ) {}
-
-    public async create(
-        request: CreateUserRequest
-    ): Promise<CreateUserResponse> {
-        const command: CreateUserCommand = {
-            id: request.id,
-            email: request.email
-        }
-
-        const result = await this.service.execute(command)
-
-        return {
-            id: result.id,
-            email: result.email,
-            active: result.active
-        }
-    }
-}
-```
-
-The complete communication follows this path:
-
-```text
-External request
-      ↓
-CreateUserAdapter
-      ↓
-CreateUserService
-      ↓
-Validation + Email + User
-      ↓
-     UserWriter
-      ↓
-External response
-```
-
-### 6. Compose the implementation in `main.ts`
-
-`main.ts` brings together the library's main implementations. The composition creates the service and provides it to the adapter.
-
-**`core/main.ts`**
-
-```ts
-import { CreateUserService } from './users/application/create-user-service.js'
-import { CreateUserAdapter } from './users/adapters/create-user-adapter.js'
-import { InMemoryUserRepository } from './users/adapters/in-memory-user-repository.js'
-
-export class CoreApplication {
-    public readonly users: CreateUserAdapter
-
-    public constructor() {
-        const users = new InMemoryUserRepository()
-        const createUserService = new CreateUserService(users)
-
-        this.users = new CreateUserAdapter(createUserService)
-    }
-}
-```
-
-`CoreApplication` provides a minimal composition: a concrete repository, a service, and an adapter.
-
-### 7. Use the implementation
-
-The consumer uses the library's main entry point and accesses the adapter prepared in `main.ts`.
-
-```ts
-import { CoreApplication } from './core/main.js'
-
-const core = new CoreApplication()
-
-const result = await core.users.create({
-    id: 'user-1',
-    email: 'alejandro@example.com'
-})
-```
-
-The adapter receives the request, applies the port, executes the service, and returns the response.
 
 ## Generated file reference
 
