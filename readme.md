@@ -74,7 +74,10 @@ core/
 ├── main.ts
 ├── shared/
 │   ├── application/
-│   │   ├── data-sources.ts
+│   │   ├── data/
+│   │   │   ├── drivers.ts
+│   │   │   ├── managers.ts
+│   │   │   └── repositories.ts
 │   │   ├── events.ts
 │   │   ├── http.ts
 │   │   ├── loggers.ts
@@ -89,8 +92,7 @@ core/
     ├── adapters/
     ├── application/
     ├── domain/
-    ├── example-ports.ts
-    └── index.ts
+    └── example-ports.ts
 ```
 
 ### Choose the destination directory
@@ -195,7 +197,7 @@ An application service combines capabilities to complete an operation. For examp
 
 #### Context root
 
-The root contains `index.ts` and other `.ts` files intended for the context's ports.
+The generated context root contains `example-ports.ts` as a starting point for the context's ports. You can keep that file, replace it, or add `index.ts` and other `.ts` files at the context root as the communication surface grows.
 
 A port describes a form of communication between the context and another system. It defines the received data, the returned data, and the operation available at that boundary.
 
@@ -225,7 +227,7 @@ The application occupies the middle layer and uses those capabilities to build p
 
 Ports and adapters occupy the outer layer and handle communication between systems.
 
-A port declares the communication available at the context boundary: what data enters, what data leaves, and which operation is exposed. Ports are declared in `index.ts` or in `.ts` modules located at the context root.
+A port declares the communication available at the context boundary: what data enters, what data leaves, and which operation is exposed. Ports are declared in `.ts` modules located at the context root. Many projects centralize them in `index.ts`, but the generated template starts with `example-ports.ts`.
 
 An adapter implements that communication. It imports the corresponding port, translates external input or output into the application process format, and delegates the work to the application service.
 
@@ -237,7 +239,7 @@ adapter → application
 application → domain
 ```
 
-For example, `users/index.ts` declares the `CreateUserPort` port. `users/adapters/create-user-adapter.ts` imports that port and connects an external request to `users/application/create-user-service.ts`. The service applies the capabilities of `Email` and `User` to complete the registration.
+For example, `users/example-ports.ts` can declare a port such as `FindUserPort`. A project can also add `users/index.ts` as its main port file. `users/adapters/create-user-adapter.ts` then imports that port and connects an external request to `users/application/create-user-service.ts`. The service applies the capabilities of `Email` and `User` to complete the registration.
 
 > **Tip:** start the implementation inside the context and move a component to `shared` when its meaning and use belong to multiple contexts.
 
@@ -600,46 +602,61 @@ The service receives a command, validates the input, constructs the entity, and 
 
 ### HTTP responses
 
-The `shared/application/http.ts` file generates `HttpResponseBody`, a response body designed for REST APIs.
+The `shared/application/http.ts` file generates lightweight HTTP contracts: `HttpRequest`, `HttpResponse`, `HttpResponseBody`, `HttpRequestHandler`, and `HttpMiddleware`.
 
-The class organizes the response into three properties:
+`HttpResponseBody` is an interface organized into three properties:
 
 ```ts
-new HttpResponseBody(data, errors, links)
+const body: HttpResponseBody = {
+    data,
+    errors,
+    links
+}
 ```
 
 `data` contains the operation data and accepts `null` when the response has no data:
 
 ```ts
-const body = new HttpResponseBody({ id: 'user-1' })
+const body: HttpResponseBody = {
+    data: { id: 'user-1' },
+    errors: null,
+    links: null
+}
 ```
 
 `errors` contains a list of messages:
 
 ```ts
-const body = new HttpResponseBody(
-    null,
-    ['The email is invalid.']
-)
+const body: HttpResponseBody = {
+    data: null,
+    errors: ['The email is invalid.'],
+    links: null
+}
 ```
 
 `links` contains HATEOAS links related to the resource and its available operations:
 
 ```ts
-const body = new HttpResponseBody(
-    { id: 'user-1' },
-    null,
-    {
+const body: HttpResponseBody = {
+    data: { id: 'user-1' },
+    errors: null,
+    links: {
         self: new URL('https://api.example.com/users/user-1')
     }
-)
+}
 ```
 
 An entity's plain output can be used as `data`:
 
 ```ts
-const body = new HttpResponseBody(user.toJSON())
+const body: HttpResponseBody = {
+    data: user.toJSON(),
+    errors: null,
+    links: null
+}
 ```
+
+`HttpRequestHandler` and `HttpMiddleware` define the contracts for adapters that receive a request, delegate to a handler, and produce a response.
 
 ### Logs
 
@@ -751,12 +768,12 @@ The service can receive `EventDispatcher` and publish `UserCreated` after comple
 
 ## Data sources
 
-The `shared/application/data-sources.ts` file organizes access to a data source into four components: `DriverManager`, `DataManager`, `DatasetManager`, and `Repository`.
+The `shared/application/data/` directory organizes access to a data source into three modules: `drivers.ts`, `managers.ts`, and `repositories.ts`. Together, they define `DriverAdapter`, `DataManager`, `DatasetManager`, and `Repository`.
 
 The complete flow looks like this:
 
 ```text
-DriverManager
+DriverAdapter
     ↓ connects and enables
 DataManager or DatasetManager
     ↓ provides plain data to
@@ -769,30 +786,28 @@ Service
 
 We will begin with the connection and proceed to the use case.
 
-### Driver manager
+### Driver adapter
 
-`DriverManager` connects and disconnects the source through a driver. When the connection is available, `connect()` returns an enabled data manager.
+`DriverAdapter` connects and disconnects the source through a driver. When the connection is available, `connect()` returns an enabled data manager.
 
 ```ts
 connect(...args): Promise<DataManager>
 disconnect(): Promise<unknown>
 ```
 
-We will create a manager for an in-memory collection of people. The example avoids a database so the focus remains on the manager's responsibility.
+We will create an adapter for an in-memory collection of people. The example avoids a database so the focus remains on the adapter's responsibility.
 
-**`users/adapters/people-driver-manager.ts`**
+**`users/adapters/people-driver-adapter.ts`**
 
 ```ts
-import { DriverManager } from '../../shared/application/data-sources.js'
-import { PeopleDataManager } from './people-data-manager.js'
+import { DriverAdapter } from '../../shared/application/data/drivers.js'
+import {
+    PeopleDataManager,
+    type PersonRecord
+} from './people-data-manager.js'
 
-export type PersonRecord = {
-    id: string
-    name: string
-}
-
-export class PeopleDriverManager
-    extends DriverManager<PeopleDataManager> {
+export class PeopleDriverAdapter
+    extends DriverAdapter<PeopleDataManager> {
 
     public constructor(private readonly records: PersonRecord[]) {
         super()
@@ -834,7 +849,7 @@ Now we will implement the data manager.
 **`users/adapters/people-data-manager.ts`**
 
 ```ts
-import { DataManager } from '../../shared/application/data-sources.js'
+import { DataManager } from '../../shared/application/data/managers.js'
 
 export type PersonRecord = {
     id: string
@@ -881,7 +896,7 @@ import {
     Creatable,
     DataManager,
     Filterable
-} from '../../shared/application/data-sources.js'
+} from '../../shared/application/data/managers.js'
 
 export class PeopleDataManager
     extends DataManager<PersonRecord>
@@ -934,7 +949,7 @@ The application layer decides when to execute these operations, combines their r
 union()
 intersection()
 difference()
-symmetric_difference()
+symmetricDifference()
 complement()
 ```
 
@@ -987,47 +1002,51 @@ Now we will implement the repository.
 **`users/adapters/people-repository.ts`**
 
 ```ts
-import { Repository } from '../../shared/application/data-sources.js'
+import {
+    Creatable,
+    DataManager
+} from '../../shared/application/data/managers.js'
+import { Repository } from '../../shared/application/data/repositories.js'
 import type { PeopleReader } from '../application/list-people-service.js'
 import { Person } from '../domain/person.js'
 import type { PersonRecord } from './people-data-manager.js'
-import { PeopleDriverManager } from './people-driver-manager.js'
+import { PeopleDriverAdapter } from './people-driver-adapter.js'
+
+type WritablePeopleDataManager =
+    DataManager<PersonRecord> &
+    Creatable<PersonRecord>
 
 export class PeopleRepository
-    extends Repository<PeopleDriverManager>
+    extends Repository<PersonRecord, Person>
     implements PeopleReader {
 
-    protected transform<T = Person>(data: Generic): T {
-        const record = data as PersonRecord
-
-        return new Person(record.id, record.name) as T
+    public constructor(records: PersonRecord[]) {
+        super(new PeopleDriverAdapter(records))
     }
 
-    private toRecord(person: Person): PersonRecord {
-        return {
-            id: person.id,
-            name: person.name
-        }
+    protected override transform(data: PersonRecord): Person {
+        return new Person(data.id, data.name)
     }
 
     public async findAll(): Promise<Person[]> {
-        const dataManager = await this.manager.connect()
-        const records = await dataManager.all()
-
-        return records.map((record) =>
-            this.transform<Person>(record)
-        )
+        return this.all()
     }
 
     public async save(person: Person): Promise<void> {
-        const dataManager = await this.manager.connect()
+        const dataManager = await this.driver.connect()
+        const writable = dataManager as WritablePeopleDataManager
 
-        await dataManager.create(this.toRecord(person))
+        await writable.create({
+            id: person.id,
+            name: person.name
+        })
+
+        await this.driver.disconnect()
     }
 }
 ```
 
-`transform()` converts the record into an entity. `toRecord()` performs the reverse conversion.
+`transform()` converts the record into an entity. The repository constructor receives the concrete `DriverAdapter`, and the inherited `all()` method already handles the connect, read, transform, and disconnect flow.
 
 ### Queries and errors in the application
 
@@ -1064,11 +1083,11 @@ export class ListPeopleService extends Service {
 
 Ports describe communication between the context and other systems. Each port defines the shape of an interaction at the boundary: input data, output data, and the available operation.
 
-The context generates `index.ts` as the main port file and `example-ports.ts` as an example of an additional file. Adapters import the ports that define the communication they materialize.
+The context generates `example-ports.ts` as a root-level starting point. As the context grows, you can add `index.ts` as the main port file or split ports across multiple `.ts` files. Adapters import the ports that define the communication they materialize.
 
 ### Main port
 
-We will declare the communication for creating a user directly in `users/index.ts`.
+If you want a main port file, you can declare the communication for creating a user directly in `users/index.ts`.
 
 **`users/index.ts`**
 
@@ -1431,19 +1450,20 @@ The adapter receives the request, applies the port, executes the service, and re
 | File | Purpose |
 | --- | --- |
 | `core/index.d.ts` | Declares `Generic<T>` for plain objects. |
-| `core/main.ts` | Contains the library's main implementation. |
+| `core/main.ts` | Placeholder for the library's main implementation and exports. |
 | `shared/domain/value-objects.ts` | Declares `ValueObject<T>` and implements `Email` and `NullableBoolean`. |
 | `shared/domain/entities.ts` | Declares the `Entity` base class. |
 | `shared/domain/aggregates.ts` | Declares the `Aggregate` base class. |
 | `shared/domain/errors.ts` | Implements `ValueError`. |
 | `shared/application/validations.ts` | Declares `Validatable`. |
 | `shared/application/services.ts` | Declares `Service` as the base class for use cases. |
-| `shared/application/http.ts` | Implements `HttpResponseBody` for REST responses and HATEOAS links. |
+| `shared/application/http.ts` | Declares HTTP request, response, body, handler, and middleware contracts. |
 | `shared/application/loggers.ts` | Declares log levels and the `Logger` contract. |
 | `shared/application/events.ts` | Declares `Event`, `EventHandler`, and `EventDispatcher`. |
-| `shared/application/data-sources.ts` | Declares source operations, managers, and repositories. |
-| `users/index.ts` | Declares the context's main communication ports. |
-| `users/example-ports.ts` | Shows an additional communication port file. |
+| `shared/application/data/drivers.ts` | Declares the `DriverAdapter` contract used to connect to a data source. |
+| `shared/application/data/managers.ts` | Declares source operations together with `DataManager` and `DatasetManager`. |
+| `shared/application/data/repositories.ts` | Declares the `Repository` base class for transforming records into domain objects. |
+| `users/example-ports.ts` | Provides a root-level starter file for declaring context ports. |
 | `users/domain/` | Contains the context's capabilities. |
 | `users/application/` | Contains processes that apply domain capabilities to fulfill purposes. |
 | `users/adapters/` | Contains integrations that import ports and connect the context with other systems. |
