@@ -1,5 +1,5 @@
 /**
- * @description
+ * @description Represents a received value that does not satisfy the rule expected by a domain concept.
  */
 export class ValueError extends Error {
     [property: string]: unknown

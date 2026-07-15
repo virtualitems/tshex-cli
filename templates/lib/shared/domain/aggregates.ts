@@ -1,7 +1,6 @@
 /**
- * @description An Aggregate is a class that contains business logic that doesn't belong to any entity.
- * It is used to perform operations that don't fit into an entity or involve multiple entities.
- * Normally, method arguments are entities.
+ * @description Represents a logical unit that groups multiple entities.
+ * Its operations depend on the identities and collaboration of the entities that compose that unit.
  */
 export abstract class Aggregate {
     [property: string]: unknown

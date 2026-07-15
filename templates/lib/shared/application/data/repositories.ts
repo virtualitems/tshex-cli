@@ -2,7 +2,8 @@ import { type DataManager } from './managers.js'
 import { type DriverAdapter } from './drivers.js'
 
 /**
- * @description Represents a data source.
+ * @description Acts as an intermediary between plain source data and domain objects.
+ * It transforms records into domain representations and can translate them back when needed.
  */
 export abstract class Repository<
     DataShape extends Record<string, unknown> = Record<string, unknown>,

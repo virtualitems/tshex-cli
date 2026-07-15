@@ -1,5 +1,6 @@
 /**
- * @description
+ * @description Represents something that occurred in the application.
+ * It carries the event time and its plain details.
  */
 export abstract class Event {
     [property: string]: unknown
@@ -11,7 +12,7 @@ export abstract class Event {
 } //:: class
 
 /**
- * @description
+ * @description Represents a reaction to an application event.
  */
 export abstract class EventHandler {
     [property: string]: unknown
@@ -20,7 +21,8 @@ export abstract class EventHandler {
 } //:: class
 
 /**
- * @description
+ * @description Declares the interaction contract with an event bus.
+ * It subscribes handlers, removes subscriptions, and dispatches events.
  */
 export abstract class EventDispatcher {
     [property: string]: unknown

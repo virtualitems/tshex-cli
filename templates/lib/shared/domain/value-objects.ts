@@ -7,7 +7,8 @@ const VALID_EMAIL_REGEX =
     /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
 
 /**
- * @description
+ * @description Represents a domain concept whose identity is determined by its value.
+ * It centralizes the rules, semantics, and behavior that belong to that value.
  */
 export abstract class ValueObject<T = unknown> {
     [property: string]: unknown
@@ -34,7 +35,8 @@ export abstract class ValueObject<T = unknown> {
 } //:: class
 
 /**
- * @description
+ * @description Models a Boolean state that can be true, false, or null.
+ * It adds explicit behavior for the indeterminate state.
  */
 export class NullableBoolean extends ValueObject<boolean | null> {
     [property: string]: unknown
@@ -61,7 +63,7 @@ export class NullableBoolean extends ValueObject<boolean | null> {
 } //:: class
 
 /**
- * @description
+ * @description Represents an email address as a value object with validation and email-specific operations.
  */
 export class Email extends ValueObject<string> {
     [property: string]: unknown

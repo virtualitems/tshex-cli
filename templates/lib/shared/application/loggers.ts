@@ -9,7 +9,8 @@ export const ERROR = 40
 export const CRITICAL = 50
 
 /**
- * @description
+ * @description Declares the logging contract used by the application layer.
+ * Adapters implement this abstraction to send logs to external systems.
  */
 export abstract class Logger {
     [property: string]: unknown
