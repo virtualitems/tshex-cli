@@ -44,6 +44,10 @@ export abstract class ValueObject<T = unknown> {
         return String(this.value)
     }
 
+    public toJSON(): T {
+        return this.value
+    }
+
     public abstract equals(other: ValueObject<T> | null | undefined): boolean
 
     // protected METHODS
