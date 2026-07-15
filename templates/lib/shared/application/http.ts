@@ -12,7 +12,6 @@ export interface HttpResponse {}
  * @description
  */
 export interface HttpResponseBody {
-    [property: string]: unknown
     readonly data: Record<string, unknown> | null
     readonly errors: string[] | null
     readonly links: Record<string, URL> | null
