@@ -58,7 +58,9 @@ export abstract class DataManager<T = Record<string, unknown>> {
 
     public abstract all(): Promise<Array<T>>
 
-    public abstract none(): Array<T>
+    public none(): Array<T> {
+        return []
+    }
 } //:: class
 
 /**
