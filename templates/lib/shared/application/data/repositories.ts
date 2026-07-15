@@ -1,4 +1,5 @@
-import { DriverAdapter } from './drivers.js'
+import { type DataManager } from './managers.js'
+import { type DriverAdapter } from './drivers.js'
 
 /**
  * @description Represents a data source.
@@ -9,7 +10,15 @@ export abstract class Repository<
 > {
     [property: string]: unknown
 
-    public constructor(public readonly manager: DriverAdapter) {}
+    public constructor(public readonly driver: DriverAdapter<DataManager<DataShape>>) {}
+
+    public async all(): Promise<Array<EntityShape>> {
+        const connection = await this.driver.connect()
+        const raw = await connection.all()
+        const entities = this.transformList(raw)
+        await this.driver.disconnect()
+        return entities
+    }
 
     protected abstract transform(data: DataShape): EntityShape
 
