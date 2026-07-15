@@ -170,6 +170,53 @@ Each directory represents a consumption adapter or a resource used by those adap
 
 This layout is intentionally different from the default context template. The standard context separates `domain`, `application`, and `adapters` because it models and provides a capability. The React context generated with `--react` assumes the opposite role: it always consumes capabilities and groups the code around the adapters required by that consumption.
 
+### Create a tests structure
+
+The `--tests` option receives a source directory and creates a matching tests structure.
+
+```bash
+npx tshex --tests ./core
+```
+
+You can also use the short form:
+
+```bash
+npx tshex -T ./core
+```
+
+The command creates the output inside a `tests/` directory. If `tests/` does not exist, the CLI asks whether it should be created.
+
+By default, the `tests/` directory is resolved from the current execution directory:
+
+```bash
+npx tshex -T ./core
+```
+
+This generates a structure like this:
+
+```text
+tests/
+`-- core/
+    |-- users/
+    |   |-- adapters/
+    |   |-- application/
+    |   |   `-- create-user.ts
+    |   `-- domain/
+    `-- billing/
+        |-- application/
+        `-- domain/
+```
+
+To choose another base directory for `tests/`, combine `--tests` with `--dir`:
+
+```bash
+npx tshex -T ./core --dir ./output
+```
+
+That command creates or reuses `./output/tests/`.
+
+This command helps you prepare a tests workspace that follows the shape of your source directory while fitting naturally into the place where you are working. You can use it in the current directory for a quick setup, or combine it with `--dir` when you want the tests structure to be created somewhere else. If `tests/` already contains content, the command continues working with what is already there instead of interrupting your flow.
+
 ## Documentation index
 
 From this point on, the guide is split into dedicated documents under `docs/`.
