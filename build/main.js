@@ -2,6 +2,8 @@
 import { program } from 'commander';
 import fs from 'node:fs';
 import path from 'node:path';
+import readline from 'node:readline/promises';
+import { stdin as input, stdout as output } from 'node:process';
 function readPackageJson() {
     const filePath = path.join(import.meta.dirname, '..', 'package.json');
     const fileContents = fs.readFileSync(filePath, 'utf-8');
@@ -43,7 +45,53 @@ function executeCreateReactContext(templatesDir, contextDir) {
         console.error(err);
     }
 }
-function main(program) {
+function executeCreateTests(sourceDir, destinationDir, fileContents, ignoredSourceDir) {
+    const entries = fs.readdirSync(sourceDir, { withFileTypes: true });
+    if (fs.existsSync(destinationDir) === false) {
+        fs.mkdirSync(destinationDir, { recursive: true });
+    }
+    for (const entry of entries) {
+        const sourcePath = path.join(sourceDir, entry.name);
+        const destinationPath = path.join(destinationDir, entry.name);
+        if (entry.isDirectory()) {
+            if (entry.name === 'shared') {
+                continue;
+            }
+            if (ignoredSourceDir !== undefined && sourcePath.startsWith(ignoredSourceDir)) {
+                continue;
+            }
+            if (fs.existsSync(destinationPath) && fs.statSync(destinationPath).isDirectory() === false) {
+                continue;
+            }
+            executeCreateTests(sourcePath, destinationPath, fileContents, ignoredSourceDir);
+            continue;
+        }
+        if (entry.isFile() && entry.name.endsWith('.ts') && fs.existsSync(destinationPath) === false) {
+            fs.writeFileSync(destinationPath, fileContents);
+        }
+    }
+}
+async function ensureTestsDirectory(testsRootDir) {
+    if (fs.existsSync(testsRootDir)) {
+        if (fs.statSync(testsRootDir).isDirectory() === false) {
+            throw new Error(`Tests path exists but is not a directory: ${testsRootDir}`);
+        }
+        return;
+    }
+    const rl = readline.createInterface({ input, output });
+    try {
+        const answer = await rl.question(`Tests directory does not exist at ${testsRootDir}. Create it? (y/N) `);
+        if (answer.trim().toLowerCase() !== 'y') {
+            return false;
+        }
+    }
+    finally {
+        rl.close();
+    }
+    fs.mkdirSync(testsRootDir, { recursive: true });
+    return true;
+}
+async function main(program) {
     const templatesDir = path.join(import.meta.dirname, '..', 'templates');
     const options = program.opts();
     let targetDir = path.resolve(options.dir ?? process.cwd());
@@ -69,6 +117,31 @@ function main(program) {
             executeCreateContext(templatesDir, targetDir);
         }
     }
+    if (options.tests !== undefined) {
+        const sourceDir = path.resolve(options.tests);
+        const testsTemplateFile = path.join(templatesDir, 'tests', 'content.ts');
+        if (fs.existsSync(sourceDir) === false) {
+            program.error(`Tests source directory does not exist: ${sourceDir}`);
+        }
+        if (fs.statSync(sourceDir).isDirectory() === false) {
+            program.error(`Tests source path is not a directory: ${sourceDir}`);
+        }
+        if (fs.existsSync(testsTemplateFile) === false) {
+            program.error(`Tests template file does not exist: ${testsTemplateFile}`);
+        }
+        const testsTemplateContents = fs.readFileSync(testsTemplateFile, 'utf-8');
+        const testsRootDir = path.join(targetDir, 'tests');
+        const testsDirectoryCreated = await ensureTestsDirectory(testsRootDir);
+        if (testsDirectoryCreated === false) {
+            program.error('Tests directory creation cancelled');
+        }
+        const testsDir = path.join(testsRootDir, path.basename(sourceDir));
+        if (testsDir === sourceDir) {
+            program.error('Tests destination directory cannot be the same as the source directory');
+        }
+        executeCreateTests(sourceDir, testsDir, testsTemplateContents, testsRootDir);
+        console.log('Tests structure created successfully');
+    }
 }
 const packageJson = readPackageJson();
 program
@@ -77,6 +150,10 @@ program
     .option('-P, --project <name>', "creates a new project with it's shared directory")
     .option('-C, --context <name>', 'creates a new context')
     .option('-R, --react', 'creates a React context with --context')
+    .option('-T, --tests <path>', 'creates a .ts tests structure from an existing directory')
     .option('--dir <path>', 'sets the directory to create the new item')
     .parse(process.argv);
-main(program);
+void main(program).catch((err) => {
+    const message = err instanceof Error ? err.message : String(err);
+    program.error(message);
+});
