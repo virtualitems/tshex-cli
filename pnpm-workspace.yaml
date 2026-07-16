@@ -1,2 +1,2 @@
 allowBuilds:
-  '@fission-ai/openspec': set this to true or false
+  '@fission-ai/openspec': true

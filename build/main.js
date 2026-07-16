@@ -45,7 +45,7 @@ function executeCreateReactContext(templatesDir, contextDir) {
         console.error(err);
     }
 }
-function executeCreateTests(sourceDir, destinationDir, fileContents, ignoredSourceDir) {
+function executeCreateTests(sourceDir, destinationDir, fileContents, ignoredSourceDir, rootSourceDir = sourceDir) {
     const entries = fs.readdirSync(sourceDir, { withFileTypes: true });
     if (fs.existsSync(destinationDir) === false) {
         fs.mkdirSync(destinationDir, { recursive: true });
@@ -54,7 +54,7 @@ function executeCreateTests(sourceDir, destinationDir, fileContents, ignoredSour
         const sourcePath = path.join(sourceDir, entry.name);
         const destinationPath = path.join(destinationDir, entry.name);
         if (entry.isDirectory()) {
-            if (entry.name === 'shared') {
+            if (entry.name === 'shared' && sourceDir === rootSourceDir) {
                 continue;
             }
             if (ignoredSourceDir !== undefined && sourcePath.startsWith(ignoredSourceDir)) {
@@ -63,7 +63,7 @@ function executeCreateTests(sourceDir, destinationDir, fileContents, ignoredSour
             if (fs.existsSync(destinationPath) && fs.statSync(destinationPath).isDirectory() === false) {
                 continue;
             }
-            executeCreateTests(sourcePath, destinationPath, fileContents, ignoredSourceDir);
+            executeCreateTests(sourcePath, destinationPath, fileContents, ignoredSourceDir, rootSourceDir);
             continue;
         }
         if (entry.isFile() && entry.name.endsWith('.ts') && fs.existsSync(destinationPath) === false) {
