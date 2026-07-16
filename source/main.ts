@@ -55,7 +55,13 @@ function executeCreateReactContext(templatesDir: string, contextDir: string) {
     }
 }
 
-function executeCreateTests(sourceDir: string, destinationDir: string, fileContents: string, ignoredSourceDir?: string) {
+function executeCreateTests(
+    sourceDir: string,
+    destinationDir: string,
+    fileContents: string,
+    ignoredSourceDir?: string,
+    rootSourceDir: string = sourceDir
+) {
     const entries = fs.readdirSync(sourceDir, { withFileTypes: true })
 
     if (fs.existsSync(destinationDir) === false) {
@@ -67,7 +73,7 @@ function executeCreateTests(sourceDir: string, destinationDir: string, fileConte
         const destinationPath = path.join(destinationDir, entry.name)
 
         if (entry.isDirectory()) {
-            if (entry.name === 'shared') {
+            if (entry.name === 'shared' && sourceDir === rootSourceDir) {
                 continue
             }
 
@@ -79,7 +85,7 @@ function executeCreateTests(sourceDir: string, destinationDir: string, fileConte
                 continue
             }
 
-            executeCreateTests(sourcePath, destinationPath, fileContents, ignoredSourceDir)
+            executeCreateTests(sourcePath, destinationPath, fileContents, ignoredSourceDir, rootSourceDir)
             continue
         }
 
