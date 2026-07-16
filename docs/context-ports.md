@@ -60,89 +60,38 @@ boundary object of the context and `createUser()` is one concrete capability
 that it exposes.
 
 This definition focuses on the interaction the context makes available. The
-same port can be reached through HTTP, queues, or other transports while
-preserving its identity as one boundary capability.
+port keeps its identity as one boundary capability while making its data and
+action explicit.
 
 The port is the executable object that this context exposes. Types help
 describe it and make its boundary explicit.
 
-#### Supporting Integration
-
-Once the port exists, other files can support it. One common case is an
-adapter that wraps the port from a concrete transport path and translates
-external input into the request expected by that port.
-
-```ts title="users/adapters/create-user.ts"
-import { User, UsersRegistry } from '../example-ports.js'
-
-type HttpRequest = {
-    body: {
-        id: string
-        email: string
-        active: boolean | null
-    }
-}
-
-export async function handleCreateUser(
-    request: HttpRequest,
-) {
-    const usersRegistry = new UsersRegistry()
-    const user: User = {
-        id: request.body.id,
-        email: request.body.email,
-        active: request.body.active,
-    }
-
-    return usersRegistry.createUser(user)
-}
-```
-
-The adapter wraps the port for one integration path and translates
-transport-level input into the user data expected by the port.
-
-This is the normal flow of the generated structure:
+This is the normal flow inside the context boundary:
 
 ```mermaid
 flowchart LR
-    external["External system"] --> adapter["Adapter or caller"]
-    adapter --> port[Concrete port]
+    caller["Caller"] --> port[Concrete port]
     port --> application[Application]
     application --> domain[Domain]
 ```
 
 The port belongs to the boundary because it is part of what the context
-exposes. An adapter is one way to reach that port. The application process
-executes the use case behind the exposed capability and uses domain
-capabilities.
+exposes. The application process executes the use case behind the exposed
+capability and uses domain capabilities.
 
 #### Multiple Port Files
 
 As the context grows, you can keep several port modules at the context root.
 
-```ts title="users/list-users.ts"
-export type ListUsersRequest = {
-    active: boolean | null
-}
-
-export type ListUsersResponse = {
-    users: Array<{
-        id: string
-        email: string
-        active: boolean | null
-    }>
-}
-
-export class UsersDirectory {
-    public async listUsers(
-        request: ListUsersRequest,
-    ): Promise<ListUsersResponse> {
+```ts title="users/registry.ts"
+export class UsersRegistry {
+    public async listUsers(): Promise<User[]> {
         // ...
     }
 }
 ```
 
-An adapter or another caller can then import the port from the file that owns
-it.
+Another caller can then import the port from the file that owns it.
 
 This arrangement is useful when one context exposes several independent
 capabilities. A single file works well for a small context. Separate files
@@ -161,16 +110,14 @@ in the generated folders.
 
 ```mermaid
 flowchart TD
-    users["users/"] --> examplePorts["example-ports.ts"]
-    users --> listUsers["list-users.ts"]
-    users --> adapters["adapters/"]
+    users["users/"] --> registry["registry.ts"]
     users --> application["application/"]
     users --> domain["domain/"]
 ```
 
 This layout keeps the context boundary visible from the top level. It also
-reduces coupling between adapters because they all import the same port
-definitions for the capabilities the context exposes.
+makes each exposed capability easy to locate because the port modules stay at
+the root of the context.
 
 #### Next Step
 
