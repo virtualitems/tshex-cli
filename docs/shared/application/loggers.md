@@ -120,8 +120,11 @@ an external platform. It only depends on the application-level contract.
 
 #### Example Flow
 
-```text
-service -> Logger contract -> adapter -> logging backend
+```mermaid
+flowchart LR
+    service[Service] --> contract["Logger contract"]
+    contract --> adapter[Adapter]
+    adapter --> backend["Logging backend"]
 ```
 
 This flow keeps observability concerns outside the core process.

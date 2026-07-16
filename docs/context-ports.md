@@ -102,12 +102,16 @@ application service.
 
 This is the normal flow of the generated structure:
 
-```text
-external system -> adapter -> application -> domain
+```mermaid
+flowchart LR
+    external["External system"] --> adapter[Adapter]
+    adapter --> port[Port]
+    port --> application[Application]
+    application --> domain[Domain]
 ```
 
 The port belongs to the boundary. The adapter materializes the boundary. The
-application process executes the use case.
+application process executes the use case and uses domain capabilities.
 
 #### Multiple Port Files
 
@@ -146,13 +150,13 @@ become easier to maintain when responsibilities start to diverge.
 The following structure keeps ports at the root while the implementation lives
 in the generated folders.
 
-```text
-users/
-├── example-ports.ts
-├── list-users.ts
-├── adapters/
-├── application/
-└── domain/
+```mermaid
+flowchart TD
+    users["users/"] --> examplePorts["example-ports.ts"]
+    users --> listUsers["list-users.ts"]
+    users --> adapters["adapters/"]
+    users --> application["application/"]
+    users --> domain["domain/"]
 ```
 
 This layout keeps the context boundary visible from the top level. It also

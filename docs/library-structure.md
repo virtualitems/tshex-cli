@@ -13,11 +13,12 @@ language, rules, and operations.
 
 The root contains the entry points of the generated library.
 
-```text
-index.d.ts
-main.ts
-shared/
-users/
+```mermaid
+flowchart TD
+    root["Library root"] --> index["index.d.ts"]
+    root --> main["main.ts"]
+    root --> shared["shared/"]
+    root --> users["users/"]
 ```
 
 `index.d.ts` defines root-level types. `main.ts` starts as a placeholder for
@@ -29,10 +30,10 @@ or more context directories.
 The `shared` directory contains concepts that can be reused by multiple
 contexts.
 
-```text
-shared/
-├── application/
-└── domain/
+```mermaid
+flowchart TD
+    shared["shared/"] --> application["application/"]
+    shared --> domain["domain/"]
 ```
 
 `shared/domain` contains modeling foundations such as value objects, entities,
@@ -47,11 +48,12 @@ Until then, keep it close to the context that owns the rule.
 A context groups the vocabulary, rules, and operations of one application
 capability.
 
-```text
-users/
-billing/
-inventory/
-sales/
+```mermaid
+flowchart TD
+    contexts["Contexts"] --> users["users/"]
+    contexts --> billing["billing/"]
+    contexts --> inventory["inventory/"]
+    contexts --> sales["sales/"]
 ```
 
 Each context can evolve independently while still reusing the abstractions from
@@ -62,12 +64,12 @@ the system.
 
 Every generated context starts with the same internal structure.
 
-```text
-users/
-├── example-ports.ts
-├── adapters/
-├── application/
-└── domain/
+```mermaid
+flowchart TD
+    users["users/"] --> ports["example-ports.ts"]
+    users --> adapters["adapters/"]
+    users --> application["application/"]
+    users --> domain["domain/"]
 ```
 
 `example-ports.ts` is the root communication surface of the context.
@@ -123,14 +125,20 @@ split ports across several files. The detailed guidance for that layout lives in
 
 The normal dependency direction is the following:
 
-```text
-adapter -> port
-adapter -> application
-application -> domain
+```mermaid
+flowchart LR
+    adapter[Adapter] --> thirdParty["Third-party library"]
+    adapter --> port[Port]
+    port --> application[Application]
+    port --> domain[Domain]
+    application --> domain
 ```
 
 This direction keeps the core model isolated from transport and infrastructure
-details. The deeper a layer is, the less it should know about the outside.
+details. Adapters integrate with external libraries and context ports. Ports
+connect the context boundary to application processes or directly to domain
+capabilities when no application orchestration is needed. The deeper a layer
+is, the less it should know about the outside.
 
 > **Warning**
 > Avoid importing adapter-specific concerns into the domain layer. Once a domain
@@ -141,21 +149,21 @@ details. The deeper a layer is, the less it should know about the outside.
 
 The following diagram shows the runtime flow of a typical operation.
 
-```text
-External system
-      |
-      v
-Port + adapter
-      |
-      v
-Application service
-      |
-      v
-Domain capability
+```mermaid
+flowchart TD
+    main["main.ts"] --> system["Own system"]
+    system --> application["Application services"]
+    application --> domain["Domain capabilities"]
+    system --> adapter[Adapters]
+    adapter --> port[Port]
+    adapter --> thirdParty["Third-party libraries"]
+    thirdParty --> external["External systems"]
 ```
 
-The adapter receives the input, the application service coordinates the use
-case, and the domain provides the rules and behavior required by that use case.
+`main.ts` is the runtime entry point into the own system. Inside that system,
+application services use domain capabilities, while adapters can depend on
+ports and third-party libraries. The port branch stops at the boundary because
+what exists beyond that port depends on the system that implements it.
 
 #### Next Step
 

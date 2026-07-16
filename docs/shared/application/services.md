@@ -112,8 +112,12 @@ result, depending on the requirements of the use case.
 
 #### Example Flow
 
-```text
-input -> service -> domain capabilities -> collaborators -> result
+```mermaid
+flowchart LR
+    input[Input] --> service[Service]
+    service --> domain["Domain capabilities"]
+    domain --> collaborators[Collaborators]
+    collaborators --> result[Result]
 ```
 
 This flow keeps orchestration in the application layer and domain meaning in

@@ -135,10 +135,12 @@ registered or executed.
 
 The normal flow is the following:
 
-```text
-service -> dispatch(event)
-dispatcher -> matching handlers
-handlers -> side effects
+```mermaid
+flowchart LR
+    service[Service] --> dispatch["dispatch(event)"]
+    dispatch --> dispatcher[Dispatcher]
+    dispatcher --> handlers["Matching handlers"]
+    handlers --> effects["Side effects"]
 ```
 
 This keeps the main process separate from secondary reactions.

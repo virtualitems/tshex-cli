@@ -123,8 +123,11 @@ cross-cutting behavior belongs in the generated HTTP abstraction.
 
 #### Example Flow
 
-```text
-request -> middleware -> handler -> response body
+```mermaid
+flowchart LR
+    request[Request] --> middleware[Middleware]
+    middleware --> handler[Handler]
+    handler --> response["Response body"]
 ```
 
 This flow keeps the transport boundary explicit while leaving framework choices

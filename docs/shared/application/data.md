@@ -176,9 +176,14 @@ and the representation used by the context.
 
 The normal flow of the data abstractions is the following:
 
-```text
-service -> repository -> driver -> data manager -> raw records
-service <- repository <- transformed records
+```mermaid
+flowchart LR
+    service[Service] --> repository[Repository]
+    repository --> driver[Driver]
+    driver --> manager["Data manager"]
+    manager --> raw["Raw records"]
+    repository --> transformed["Transformed records"]
+    transformed --> service
 ```
 
 This separation keeps the application service focused on orchestration while
