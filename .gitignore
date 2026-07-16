@@ -1,15 +1,33 @@
+# Personal
+/.credentials
+/.ignore
+/.vscode
+
+# Knowledge
+/.wiki
+/.example
+/.examples
+
+# AI
+/.agents
+/.claude
+/.codex
+/.opencode
+
+# SQLite database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+
 # Environment
 .env
 
-# Personal
-.ignore/
-.example/
-
-# Wiki
-.wiki/
-
 # Build
-dist/
+/dist
+/build
 
 # Editor directories and files
 .vscode/*
