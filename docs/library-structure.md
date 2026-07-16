@@ -72,9 +72,14 @@ flowchart TD
     users --> domain["domain/"]
 ```
 
-`example-ports.ts` is the root communication surface of the context.
+`example-ports.ts` is an example module in the root communication surface of
+the context.
 `domain/` contains capabilities and rules. `application/` contains processes.
-`adapters/` contains boundary implementations.
+`adapters/` contains integrations that wrap third-party libraries or context
+ports.
+
+Context root `.ts` files belong to the boundary surface of the context. Each
+one is expected to be a module that defines one or more context ports.
 
 #### Domain
 
@@ -105,21 +110,23 @@ business rules themselves.
 The adapters layer contains the integrations that connect a context to other
 systems.
 
-An adapter can expose an HTTP handler, consume a message, call a remote API,
-implement a data driver, or connect to an event bus. Its role is to translate
-external input or output into the contracts expected by the application layer.
+An adapter wraps a third-party library or a context port so that the context
+can interact with a concrete transport or infrastructure path. An adapter can
+expose an HTTP handler, consume a message, call a remote API, implement a data
+driver, or connect to an event bus.
 
 #### Ports
 
 Ports define the communication available at the context boundary.
 
 They live at the context root because they describe how the context is used
-from the outside. An adapter imports a port, implements it, and delegates the
-work to an application process.
+from the outside. A port is the concrete object the context exposes. Adapters
+or other callers can use that port object and route work into an application
+process.
 
-The generated template starts with `example-ports.ts`, but a larger context may
-split ports across several files. The detailed guidance for that layout lives in
-`context-ports.md`.
+The generated template starts with `example-ports.ts`. As the context grows,
+additional context root `.ts` modules can define more ports. The detailed
+guidance for that layout lives in `context-ports.md`.
 
 #### Dependency Direction
 
@@ -130,15 +137,13 @@ flowchart LR
     adapter[Adapter] --> thirdParty["Third-party library"]
     adapter --> port[Port]
     port --> application[Application]
-    port --> domain[Domain]
     application --> domain
 ```
 
 This direction keeps the core model isolated from transport and infrastructure
 details. Adapters integrate with external libraries and context ports. Ports
-connect the context boundary to application processes or directly to domain
-capabilities when no application orchestration is needed. The deeper a layer
-is, the less it should know about the outside.
+connect the context boundary to application processes. The deeper a layer is,
+the less it should know about the outside.
 
 > **Warning**
 > Avoid importing adapter-specific concerns into the domain layer. Once a domain

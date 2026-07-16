@@ -61,14 +61,14 @@ application coordinates data access without forcing a specific driver.
 
 #### Context Files
 
-Each generated context starts with a root port file and three directories.
+Each generated context starts with an example port file and three directories.
 
 | Path | Responsibility |
 | --- | --- |
-| `users/example-ports.ts` | Placeholder root file for context ports. |
+| `users/example-ports.ts` | Example module for context ports. All context root `.ts` files are expected to define context ports. |
 | `users/domain/` | Domain capabilities and rules for the context. |
 | `users/application/` | Processes that use domain capabilities to fulfill system purposes. |
-| `users/adapters/` | Integrations that implement ports and connect the context to external systems. |
+| `users/adapters/` | Integrations that wraps third-party libraries or context ports. |
 
 The `users/` path is an example context name. Your project can generate one or
 more contexts with the same internal layout.
@@ -81,8 +81,8 @@ Use the following sequence when deciding where new code belongs.
 2. Put reusable application contracts in `shared/application`.
 3. Put context-specific rules in `<context>/domain`.
 4. Put use cases in `<context>/application`.
-5. Put boundary implementations in `<context>/adapters`.
-6. Put boundary contracts at the context root.
+5. Put transport and infrastructure integrations in `<context>/adapters`.
+6. Put concrete boundary ports in context root `.ts` files.
 
 This reference explains placement. The architectural rationale is described in
 `library-structure.md`.
