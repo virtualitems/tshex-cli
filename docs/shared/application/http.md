@@ -1,12 +1,11 @@
 ### HTTP
 
-The HTTP contracts define a transport-facing boundary without coupling the
-generated structure to a specific framework.
+The HTTP contracts define a framework-agnostic, transport-facing boundary.
 They are used when an adapter needs to describe requests, responses, handlers,
 or middleware in a consistent way.
 
-The generated template keeps `HttpRequest` and `HttpResponse` empty on purpose.
-Each project can extend them with the fields required by its own transport.
+The generated template relies on the standard `Request` and `Response` types
+from the Fetch API, so adapters work directly with the platform's own APIs.
 
 #### Response Body
 
@@ -22,7 +21,8 @@ export interface HttpResponseBody {
 ```
 
 This structure makes successful data, error messages, and related links
-explicit without forcing a specific router or server implementation.
+explicit, leaving the router or server implementation as the adapter's
+choice.
 
 #### Request Handler
 
@@ -31,53 +31,37 @@ response.
 
 ```ts title="shared/application/http.ts"
 export interface HttpRequestHandler {
-    handle(request: HttpRequest): HttpResponse | Promise<HttpResponse>
+    handle(request: Request): Response | Promise<Response>
 }
 ```
 
-In the following example we define adapter-specific request and response types,
-then implement a handler.
+In the following example we implement a handler using the standard `Request`
+and `Response` objects.
 
 ```ts title="users/adapters/get-user-handler.ts"
 import {
-    HttpRequest,
     HttpRequestHandler,
-    HttpResponse,
     HttpResponseBody,
 } from '../../shared/application/http.js'
 
-interface UserHttpRequest extends HttpRequest {
-    readonly params: {
-        id: string
-    }
-}
-
-interface UserHttpResponse extends HttpResponse {
-    readonly status: number
-    readonly body: HttpResponseBody
-}
-
 export class GetUserHandler implements HttpRequestHandler {
-    public handle(request: HttpRequest): HttpResponse {
-        const typedRequest = request as UserHttpRequest
+    public handle(request: Request): Response {
+        const id = new URL(request.url).pathname.split('/').at(-1)
 
-        return {
-            status: 200,
-            body: {
-                data: {
-                    id: typedRequest.params.id,
-                },
-                errors: null,
-                links: null,
-            },
-        } as UserHttpResponse
+        const body: HttpResponseBody = {
+            data: { id },
+            errors: null,
+            links: null,
+        }
+
+        return Response.json(body, { status: 200 })
     }
 }
 ```
 
-The generated `HttpRequest` and `HttpResponse` interfaces stay empty, so the
-adapter declares the transport-specific fields locally. This keeps the shared
-contract small and portable.
+Using the standard `Request` and `Response` types means the adapter relies
+on the platform's own APIs, such as `request.url`, `request.headers`, and
+`Response.json`.
 
 #### Middleware
 
@@ -86,9 +70,9 @@ contract small and portable.
 ```ts title="shared/application/http.ts"
 export interface HttpMiddleware {
     process(
-        request: HttpRequest,
+        request: Request,
         handler: HttpRequestHandler,
-    ): HttpResponse | Promise<HttpResponse>
+    ): Response | Promise<Response>
 }
 ```
 
@@ -97,29 +81,27 @@ Now that the handler exists, middleware can wrap it.
 ```ts title="users/adapters/request-logger.ts"
 import {
     HttpMiddleware,
-    HttpRequest,
     HttpRequestHandler,
-    HttpResponse,
 } from '../../shared/application/http.js'
 
 export class RequestLoggerMiddleware implements HttpMiddleware {
     public async process(
-        request: HttpRequest,
+        request: Request,
         handler: HttpRequestHandler,
-    ): Promise<HttpResponse> {
+    ): Promise<Response> {
         void request
         return handler.handle(request)
     }
 }
 ```
 
-This middleware does not mutate the request or response. It only shows where
+This middleware passes the request through unchanged, showing where
 cross-cutting behavior belongs in the generated HTTP abstraction.
 
-> **Warning**
-> Do not treat the shared HTTP contracts as a full framework abstraction. They
-> only define the minimum boundary for adapters. Routing, serialization, and
-> status code policies remain the responsibility of the concrete transport.
+> **Note**
+> The shared HTTP contracts define the minimum boundary for adapters. Routing,
+> serialization, and status code policies are the responsibility of the
+> concrete transport.
 
 #### Example Flow
 

@@ -1,16 +1,6 @@
 /**
  * @description
  */
-export interface HttpRequest {}
-
-/**
- * @description
- */
-export interface HttpResponse {}
-
-/**
- * @description
- */
 export interface HttpResponseBody {
     readonly data: Record<string, unknown> | null
     readonly errors: string[] | null
@@ -21,7 +11,7 @@ export interface HttpResponseBody {
  * @description
  */
 export interface HttpRequestHandler {
-    handle(request: HttpRequest): HttpResponse | Promise<HttpResponse>
+    handle(request: Request): Response | Promise<Response>
 }
 
 /**
@@ -29,7 +19,7 @@ export interface HttpRequestHandler {
  */
 export interface HttpMiddleware {
     process(
-        request: HttpRequest,
+        request: Request,
         handler: HttpRequestHandler
-    ): HttpResponse | Promise<HttpResponse>
+    ): Response | Promise<Response>
 }
