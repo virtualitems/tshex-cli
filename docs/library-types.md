@@ -7,10 +7,10 @@ data but does not need a more specific shape yet.
 
 #### Root Declaration
 
-The root declaration lives in `index.d.ts`.
+The root declaration lives in `types/objects.d.ts`.
 
-```ts title="index.d.ts"
-type Generic<T = unknown> = Record<string, T>
+```ts title="types/objects.d.ts"
+export type Generic<T = unknown> = Record<string, T>
 ```
 
 This alias expands to `Record<string, T>`. When no type argument is provided,
@@ -21,6 +21,8 @@ the values use `unknown`.
 In the following example we use `Generic<string>` for a set of plain filters.
 
 ```ts
+import { type Generic } from './types/objects.js'
+
 const filters: Generic<string> = {
     status: 'active',
     sort: 'email',
@@ -35,6 +37,8 @@ value shape for the whole object.
 Now consider the same pattern without providing a type argument.
 
 ```ts
+import { type Generic } from './types/objects.js'
+
 const metadata: Generic = {
     retries: 2,
     cached: true,

@@ -9,12 +9,24 @@ The root contains the main entry points of the generated library.
 
 | File | Responsibility |
 | --- | --- |
-| `index.d.ts` | Declares root-level shared types such as `Generic<T>`. |
 | `main.ts` | Starts as a placeholder for the main implementation and root exports. |
 
-`index.d.ts` is the place for root-level type declarations. `main.ts` is the
-place for the main runtime entry point when the library starts exposing shared
-runtime components.
+`main.ts` is the place for the main runtime entry point when the library
+starts exposing shared runtime components.
+
+#### Types Files
+
+The `types/` directory contains root-level ambient type declarations.
+
+| File | Responsibility |
+| --- | --- |
+| `types/objects.d.ts` | Declares root-level shared types such as `Generic<T>`. |
+| `types/cldr.d.ts` | Declares the `Locale` union from Unicode CLDR. |
+| `types/iana.d.ts` | Declares the `TimeZone` union from the IANA time zone database. |
+
+`types/objects.d.ts` is the place for general-purpose root-level type
+declarations. `types/cldr.d.ts` and `types/iana.d.ts` are generated reference
+types consumed by other shared contracts, such as `shared/application/loggers.ts`.
 
 #### Shared Domain Files
 

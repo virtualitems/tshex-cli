@@ -15,15 +15,32 @@ The root contains the entry points of the generated library.
 
 ```mermaid
 flowchart TD
-    root["Library root"] --> index["index.d.ts"]
+    root["Library root"] --> types["types/"]
     root --> main["main.ts"]
     root --> shared["shared/"]
     root --> users["users/"]
 ```
 
-`index.d.ts` defines root-level types. `main.ts` starts as a placeholder for
-main runtime exports. The rest of the structure lives under `shared/` and one
-or more context directories.
+`types/` groups the root-level type declarations. `main.ts` starts as a
+placeholder for main runtime exports. The rest of the structure lives under
+`shared/` and one or more context directories.
+
+#### Types
+
+The `types/` directory contains ambient type declarations shared by the whole
+library.
+
+```mermaid
+flowchart TD
+    types["types/"] --> typesObjects["objects.d.ts"]
+    types --> cldr["cldr.d.ts"]
+    types --> iana["iana.d.ts"]
+```
+
+`types/objects.d.ts` defines root-level types such as `Generic<T>`.
+`types/cldr.d.ts` declares the `Locale` union from Unicode CLDR.
+`types/iana.d.ts` declares the `TimeZone` union from the IANA time zone
+database.
 
 #### Shared
 
