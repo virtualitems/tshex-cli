@@ -28,21 +28,56 @@ any adapter to use a particular logger implementation.
 `Logger` is responsible for receiving log data from the application layer.
 
 ```ts title="shared/application/loggers.ts"
+import { type TimeZone } from '../../types/iana.js'
+import { type Locale } from '../../types/cldr.js'
+
 export abstract class Logger {
-	public abstract debug(data: unknown): void
+    [property: string]: unknown
 
-	public abstract info(data: unknown): void
+    public name: string = 'main'
 
-	public abstract warning(data: unknown): void
+    public level: number = 0
 
-	public abstract error(data: unknown): void
+    public datetimeLocales: Locale[] = ['en-GB']
 
-	public abstract critical(data: unknown): void
-}
+    public datetimeFormatOptions: Intl.DateTimeFormatOptions & { timeZone: TimeZone } = {
+        timeZone: 'UTC',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        fractionalSecondDigits: 3,
+        hourCycle: 'h23'
+    }
+
+    public abstract debug(data: unknown): void
+
+    public abstract info(data: unknown): void
+
+    public abstract warning(data: unknown): void
+
+    public abstract error(data: unknown): void
+
+    public abstract critical(data: unknown): void
+
+    protected getCurrentDatetime(): string {
+        return new Date().toLocaleString(this.datetimeLocales, this.datetimeFormatOptions)
+    }
+} //:: class
 ```
 
 The contract is intentionally small. It defines the actions the application can
 request, while the adapter decides how those actions are persisted or displayed.
+
+`name` and `level` identify the logger instance and its minimum severity, so an
+adapter can decide which logs to emit or route. `datetimeLocales` and
+`datetimeFormatOptions` control how `getCurrentDatetime()` formats the current
+moment, using the `Locale` type from `types/cldr.d.ts` and the `TimeZone` type
+from `types/iana.d.ts`. Adapters can use `getCurrentDatetime()` to timestamp
+log entries consistently, regardless of the runtime environment's own locale
+or timezone.
 
 #### First Adapter
 
@@ -51,43 +86,32 @@ In the following example we implement a console-based logger.
 ```ts title="users/adapters/console-logger.ts"
 import { Logger } from '../../shared/application/loggers.js'
 
-type ExternalService = {
-    debug(data: unknown): void
-    info(data: unknown): void
-    warning(data: unknown): void
-    error(data: unknown): void
-    critical(data: unknown): void
-}
-
 export class ConsoleLogger extends Logger {
-    constructor(protected readonly externalService: ExternalService) {
-        super()
-    }
-
 	public debug(data: unknown): void {
-		this.externalService.debug(data)
+		console.debug(this.getCurrentDatetime(), this.name, data)
 	}
 
 	public info(data: unknown): void {
-		this.externalService.info(data)
+		console.info(this.getCurrentDatetime(), this.name, data)
 	}
 
 	public warning(data: unknown): void {
-		this.externalService.warning(data)
+		console.warn(this.getCurrentDatetime(), this.name, data)
 	}
 
 	public error(data: unknown): void {
-		this.externalService.error(data)
+		console.error(this.getCurrentDatetime(), this.name, data)
 	}
 
 	public critical(data: unknown): void {
-		this.externalService.critical(data)
+		console.error(this.getCurrentDatetime(), this.name, data)
 	}
 }
 ```
 
 This adapter satisfies the generated contract without changing the application
-layer.
+layer. It reuses `getCurrentDatetime()` to prefix every entry with a
+consistently formatted timestamp.
 
 #### Service Integration
 
