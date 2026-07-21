@@ -68,6 +68,44 @@ generic record.
 > `Generic<T>` is intentionally small. It should support loose object contracts,
 > not replace explicit domain or application types.
 
+#### JSON Values
+
+The generated root also declares a small family of types that describe plain,
+serializable JSON data. They live in `types/json.d.ts`.
+
+```ts title="types/json.d.ts"
+export type JsonPrimitive = string | number | boolean | null
+
+export type JsonValue = JsonPrimitive | JsonObject | JsonArray
+
+export type JsonArray = readonly JsonValue[]
+
+export type JsonObject = {
+    readonly [key: string]: JsonValue
+}
+```
+
+`JsonPrimitive` covers the scalar values allowed in JSON. `JsonValue` extends
+that with nested objects and arrays, so it recursively describes any value that
+survives a round trip through `JSON.stringify()`/`JSON.parse()`. `JsonObject`
+and `JsonArray` name the two composite shapes so other declarations can refer
+to them directly instead of repeating the union.
+
+```ts
+import { type JsonValue } from './types/json.js'
+
+function toLogPayload(value: JsonValue): string {
+    return JSON.stringify(value)
+}
+```
+
+Use `JsonValue` and `JsonObject` when a contract must guarantee its data is
+plain and serializable, such as request payloads, stored metadata, or wire
+formats. Prefer `Generic<T>` instead when the value type is not required to be
+JSON-safe. `shared/application/http/json-api.ts` and
+`shared/application/http/json-web-token.ts` build on these types to describe
+JSON:API documents and JOSE/JWT structures.
+
 #### Next Step
 
 For the rest of the generated shared abstractions, continue with the pages in

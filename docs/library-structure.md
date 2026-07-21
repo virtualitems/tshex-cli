@@ -33,12 +33,14 @@ library.
 ```mermaid
 flowchart TD
     types["types/"] --> typesObjects["objects.d.ts"]
+    types --> json["json.d.ts"]
     types --> cldr["cldr.d.ts"]
     types --> iana["iana.d.ts"]
 ```
 
 `types/objects.d.ts` defines root-level types such as `Generic<T>`.
-`types/cldr.d.ts` declares the `Locale` union from Unicode CLDR.
+`types/json.d.ts` defines `JsonValue` and the other plain, serializable JSON
+shapes. `types/cldr.d.ts` declares the `Locale` union from Unicode CLDR.
 `types/iana.d.ts` declares the `TimeZone` union from the IANA time zone
 database.
 
