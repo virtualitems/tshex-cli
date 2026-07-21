@@ -1,5 +1,5 @@
-import { type TimeZone } from '../../types/iana'
-import { type Locale } from '../../types/cldr'
+import { type TimeZone } from '../../types/timezones'
+import { type Locale } from '../../types/locales'
 
 export const DEBUG = 10
 
