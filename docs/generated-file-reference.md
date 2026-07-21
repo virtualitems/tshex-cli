@@ -22,13 +22,14 @@ The `types/` directory contains root-level ambient type declarations.
 | --- | --- |
 | `types/objects.d.ts` | Declares root-level shared types such as `Generic<T>`. |
 | `types/json.d.ts` | Declares `JsonValue` and the other plain, serializable JSON shapes. |
-| `types/cldr.d.ts` | Declares the `Locale` union from Unicode CLDR. |
-| `types/iana.d.ts` | Declares the `TimeZone` union from the IANA time zone database. |
+| `types/locales.d.ts` | Declares the `Locale` union from Unicode CLDR. |
+| `types/timezones.d.ts` | Declares the `TimeZone` union from the IANA time zone database. |
 
 `types/objects.d.ts` and `types/json.d.ts` are the place for general-purpose
-root-level type declarations. `types/cldr.d.ts` and `types/iana.d.ts` are
-generated reference types consumed by other shared contracts, such as
-`shared/application/loggers.ts`.
+root-level type declarations. `types/locales.d.ts` and `types/timezones.d.ts`
+are generated reference types consumed by other shared contracts, such as
+`shared/application/loggers.ts`. Each file is documented in its own page under
+`types/*.md`.
 
 #### Shared Domain Files
 
@@ -66,15 +67,17 @@ boundary and the type-only specifications for common web content formats.
 
 | File | Responsibility |
 | --- | --- |
-| `shared/application/http/http.ts` | Declares `HttpRequestHandler`, `HttpMiddleware`, and `HttpError`. |
+| `shared/application/http/handlers.ts` | Declares `HttpRequestHandler` and `HttpMiddleware`. |
+| `shared/application/http/errors.ts` | Declares `HttpError`. |
 | `shared/application/http/json-api.ts` | Type-only JSON:API v1.1 document, resource, and Atomic Operations declarations. |
 | `shared/application/http/json-web-token.ts` | Type-only JOSE/JWT declarations (JWK, JWS, JWE, JWT claims). |
 | `shared/application/http/opengraph.ts` | Type-only Open Graph, Twitter Card, and social metadata declarations. |
 
-`http.ts` is the only file in this directory with runtime code. `json-api.ts`,
-`json-web-token.ts`, and `opengraph.ts` contain compile-time structure only;
-they describe the shape of external formats without implementing parsing,
-validation, or serialization.
+`handlers.ts` and `errors.ts` are the only files in this directory with
+runtime code. `json-api.ts`, `json-web-token.ts`, and `opengraph.ts` contain
+compile-time structure only; they describe the shape of external formats
+without implementing parsing, validation, or serialization. Each file is
+documented in its own page under `shared/application/http/*.md`.
 
 #### Shared Data Files
 

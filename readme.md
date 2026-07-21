@@ -82,7 +82,6 @@ The command creates this structure:
 
 ```text
 core/
-|-- index.d.ts
 |-- main.ts
 |-- shared/
 |   |-- application/
@@ -91,7 +90,12 @@ core/
 |   |   |   |-- managers.ts
 |   |   |   `-- repositories.ts
 |   |   |-- events.ts
-|   |   |-- http.ts
+|   |   |-- http/
+|   |   |   |-- errors.ts
+|   |   |   |-- handlers.ts
+|   |   |   |-- json-api.ts
+|   |   |   |-- json-web-token.ts
+|   |   |   `-- opengraph.ts
 |   |   |-- loggers.ts
 |   |   |-- services.ts
 |   |   `-- validations.ts
@@ -100,6 +104,11 @@ core/
 |       |-- entities.ts
 |       |-- errors.ts
 |       `-- value-objects.ts
+|-- types/
+|   |-- json.d.ts
+|   |-- locales.d.ts
+|   |-- objects.d.ts
+|   `-- timezones.d.ts
 `-- users/
     |-- adapters/
     |-- application/
@@ -224,15 +233,25 @@ From this point on, the guide is split into dedicated documents under `docs/`.
 ### General
 
 - [Project structure](https://github.com/virtualitems/tshex-cli/blob/main/docs/library-structure.md)
-- [Project types](https://github.com/virtualitems/tshex-cli/blob/main/docs/library-types.md)
 - [Context ports](https://github.com/virtualitems/tshex-cli/blob/main/docs/context-ports.md)
 - [Generated file reference](https://github.com/virtualitems/tshex-cli/blob/main/docs/generated-file-reference.md)
+
+### Types
+
+- [types/objects.d.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/types/objects.md)
+- [types/json.d.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/types/json.md)
+- [types/locales.d.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/types/locales.md)
+- [types/timezones.d.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/types/timezones.md)
 
 ### Shared application
 
 - [shared/application/data](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/data.md)
 - [shared/application/events.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/events.md)
-- [shared/application/http.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/http.md)
+- [shared/application/http/errors.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/http/errors.md)
+- [shared/application/http/handlers.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/http/handlers.md)
+- [shared/application/http/json-api.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/http/json-api.md)
+- [shared/application/http/json-web-token.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/http/json-web-token.md)
+- [shared/application/http/opengraph.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/http/opengraph.md)
 - [shared/application/loggers.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/loggers.md)
 - [shared/application/services.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/services.md)
 - [shared/application/validations.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/validations.md)

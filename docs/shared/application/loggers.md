@@ -28,8 +28,8 @@ any adapter to use a particular logger implementation.
 `Logger` is responsible for receiving log data from the application layer.
 
 ```ts title="shared/application/loggers.ts"
-import { type TimeZone } from '../../types/iana.js'
-import { type Locale } from '../../types/cldr.js'
+import { type TimeZone } from '../../types/timezones.js'
+import { type Locale } from '../../types/locales.js'
 
 export abstract class Logger {
     [property: string]: unknown
@@ -74,8 +74,9 @@ request, while the adapter decides how those actions are persisted or displayed.
 `name` and `level` identify the logger instance and its minimum severity, so an
 adapter can decide which logs to emit or route. `datetimeLocales` and
 `datetimeFormatOptions` control how `getCurrentDatetime()` formats the current
-moment, using the `Locale` type from `types/cldr.d.ts` and the `TimeZone` type
-from `types/iana.d.ts`. Adapters can use `getCurrentDatetime()` to timestamp
+moment, using the `Locale` type from `types/locales.d.ts` (see
+`types/locales.md`) and the `TimeZone` type from `types/timezones.d.ts` (see
+`types/timezones.md`). Adapters can use `getCurrentDatetime()` to timestamp
 log entries consistently, regardless of the runtime environment's own locale
 or timezone.
 
