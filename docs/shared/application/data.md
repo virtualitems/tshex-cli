@@ -49,7 +49,7 @@ The base class provides `none()` as an explicit empty result and requires
 contracts such as `Filterable`, `Creatable`, and `Updatable`, plus the
 `DatasetManager` extension for set operations.
 
-#### First Implementation
+#### Implementation
 
 In the following example we implement an in-memory manager and its driver.
 
@@ -91,6 +91,18 @@ export class MemoryUsersDriver extends DriverAdapter<MemoryUsersManager> {
 `MemoryUsersDriver` owns the connection contract. `MemoryUsersManager` owns the
 raw records. The application layer can use both without knowing whether the
 source is memory, SQL, or an HTTP-backed adapter.
+
+Put all your complex data operations in `DataManager`. `Repository` should only handle the transformation of raw records into domain representations. For example, if you need to relate users to their posts, implement that in a manager:
+
+```ts
+class ComplexUsersManager extends DataManager<EnrichedUserRecord> {
+    ...
+
+    public async findAllAndRelate(): Promise<Array<EnrichedUserRecord>> {
+        ...
+    }
+}
+```
 
 #### Repository
 
