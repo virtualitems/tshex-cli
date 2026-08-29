@@ -10,7 +10,9 @@ type Generic = Record<string, unknown>
 export abstract class Repository<RawDataShape = Generic, EntityShape = Generic> {
     [property: string]: unknown
 
-    public constructor(public readonly driver: DriverAdapter<DataManager<RawDataShape>>) {}
+    public constructor(
+        public readonly driver: DriverAdapter<DataManager<RawDataShape>>
+    ) {}
 
     protected abstract transform(data: RawDataShape): EntityShape
 } //:: class
