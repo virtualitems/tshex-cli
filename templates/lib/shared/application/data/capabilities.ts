@@ -1,23 +1,21 @@
 type Generic = Record<string, unknown>
 
-type QueryResponse = Generic | Promise<Generic[]>
-
 export interface Listable {
-    all(): QueryResponse
+    all(): Generic | Promise<Generic[]>
 }
 
 /**
  * @description Declares a filtering operation over plain source records.
  */
 export interface Filterable {
-    filter(selector: unknown): QueryResponse
+    filter(selector: unknown): Generic | Promise<Generic[]>
 }
 
 /**
  * @description Declares a sorting operation over plain source records.
  */
 export interface Sortable {
-    sort(selector: unknown): QueryResponse
+    sort(selector: unknown): Generic | Promise<Generic[]>
 }
 
 /**
