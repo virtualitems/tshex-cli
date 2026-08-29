@@ -12,6 +12,6 @@ export abstract class Entity {
     }
 
     public toString(): string {
-        return String(this.constructor.name)
+        return this.constructor.name
     }
 } //:: class
