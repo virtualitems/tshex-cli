@@ -1,29 +1,16 @@
 import { type DataManager } from './managers.js'
 import { type DriverAdapter } from './drivers.js'
 
+type Generic = Record<string, unknown>
+
 /**
  * @description Acts as an intermediary between plain source data and domain objects.
  * It transforms records into domain representations and can translate them back when needed.
  */
-export abstract class Repository<
-    DataShape extends Record<string, unknown> = Record<string, unknown>,
-    EntityShape extends Record<string, unknown> = Record<string, unknown>
-> {
+export abstract class Repository<RawDataShape = Generic, EntityShape = Generic> {
     [property: string]: unknown
 
-    public constructor(public readonly driver: DriverAdapter<DataManager<DataShape>>) {}
+    public constructor(public readonly driver: DriverAdapter<DataManager<RawDataShape>>) {}
 
-    public async all(): Promise<Array<EntityShape>> {
-        const connection = await this.driver.connect()
-        const raw = await connection.all()
-        const entities = this.transformList(raw)
-        await this.driver.disconnect()
-        return entities
-    }
-
-    protected transformList(data: Array<DataShape>): Array<EntityShape> {
-        return data.map(this.transform)
-    }
-
-    protected abstract transform(data: DataShape): EntityShape
+    protected abstract transform(data: RawDataShape): EntityShape
 } //:: class
