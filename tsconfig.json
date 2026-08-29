@@ -1,26 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": [
-      "ESNext",
-      "DOM"
-    ],
     "useDefineForClassFields": true,
     "moduleDetection": "force",
-    "module": "NodeNext",
+    "module": "ESNext",
     "rootDir": "./source",
-    "moduleResolution": "NodeNext",
-    "paths": {
-      "@/*": [
-        "./source/*"
-      ]
-    },
-    "typeRoots": [
-      "./node_modules/@types"
-    ],
-    "types": [
-      "node"
-    ],
+    "moduleResolution": "Bundler",
     "resolveJsonModule": true,
     "allowJs": false,
     "outDir": "./build",
