@@ -8,6 +8,9 @@
 /.example
 /.examples
 
+# Tests output
+/.tests
+
 # AI
 /.agents
 /.claude

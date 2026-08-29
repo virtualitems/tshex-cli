@@ -42,7 +42,8 @@
     "tshex": "./build/main.js"
   },
   "scripts": {
-    "build": "deno run --allow-all npm:esbuild --bundle --minify --platform=node --external:commander --format=esm --outfile=./build/main.js ./source/main.ts"
+    "build": "deno run --allow-all npm:esbuild --bundle --minify --platform=node --external:commander --format=esm --outfile=./build/main.js ./source/main.ts",
+    "test": "deno test --allow-all tests/"
   },
   "dependencies": {
     "commander": "^15.0.0"
