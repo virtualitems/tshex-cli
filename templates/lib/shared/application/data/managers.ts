@@ -12,13 +12,13 @@ export abstract class DataManager<T = Record<string, unknown>> {
 export abstract class DatasetManager<T = Record<string, unknown>> extends DataManager<T> {
     [property: string]: unknown
 
-    public abstract union(other: Array<T>): Promise<Array<T>>
+    public abstract union(other: Array<T>): Array<T>
 
-    public abstract intersection(other: Array<T>): Promise<Array<T>>
+    public abstract intersection(other: Array<T>): Array<T>
 
-    public abstract difference(other: Array<T>): Promise<Array<T>>
+    public abstract difference(other: Array<T>): Array<T>
 
-    public abstract symmetricDifference(other: Array<T>): Promise<Array<T>>
+    public abstract symmetricDifference(other: Array<T>): Array<T>
 
-    public abstract complement(other: Array<T>): Promise<Array<T>>
+    public abstract complement(other: Array<T>): Array<T>
 } //:: class
