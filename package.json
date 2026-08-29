@@ -6,7 +6,6 @@
   "description": "Typescript Hexagonal Architecture CLI",
   "type": "module",
   "main": "./build/main.js",
-  "packageManager": "pnpm@11.5.2",
   "keywords": [
     "architecture",
     "clean-architecture",
@@ -43,14 +42,12 @@
     "tshex": "./build/main.js"
   },
   "scripts": {
-    "build": "tsc"
+    "build": "deno run --allow-all npm:esbuild --bundle --platform=node --external:commander --format=esm --outfile=./build/main.js ./source/main.ts"
   },
   "dependencies": {
-    "commander": "^12.1.0"
+    "commander": "^15.0.0"
   },
   "devDependencies": {
-    "@fission-ai/openspec": "^1.6.0",
-    "@types/node": "^22.5.4",
-    "typescript": "^5.4.5"
+    "@types/node": "^18"
   }
 }
