@@ -9,7 +9,7 @@ import { DataManager } from './managers.js'
 export abstract class DriverAdapter<M extends DataManager = DataManager> {
     [property: string]: unknown
 
-    public abstract connect(...args: unknown[]): Promise<M>
+    public abstract connect(...args: unknown[]): M
 
-    public abstract disconnect(): Promise<unknown>
+    public abstract disconnect(): unknown
 } //:: class
