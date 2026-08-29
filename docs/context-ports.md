@@ -21,7 +21,7 @@ surface that another actor can call or observe.
 
 The generated context starts with a single root file for ports.
 
-```ts title="users/example-ports.ts"
+```ts title="enrollment/example-ports.ts"
 export class ExamplePort {
     public doSomething(): void {
         // ...
@@ -39,32 +39,56 @@ expected to be a module that defines one or more context ports.
 #### First Port
 
 In the following example we replace the placeholder with a concrete port for
-creating a user.
+managing course enrollments.
 
-```ts title="users/example-ports.ts"
-export interface User {
-    id: string
-    email: string
-    active: boolean | null
-}
+```ts title="enrollment/example-ports.ts"
+import { InMemoryDatabaseDriver } from './application/database.ts'
+import { Course } from './domain/courses.ts'
+import { Student } from './domain/students.ts'
+import { InscriptionAggregate } from './domain/inscriptions.ts'
 
-export class UsersRegistry {
-    public async createUser(user: User): Promise<User> {
-        // ...
+const database: Record<string, Record<string, unknown>[]> = {}
+
+export class Example {
+    [property: string]: unknown
+
+    private readonly driver: InMemoryDatabaseDriver
+
+    constructor() {
+        this.driver = new InMemoryDatabaseDriver(database)
+    }
+
+    public createStudent(student: Student) {
+        const result = this.driver.connect('students').create(student.toJSON())
+        this.driver.disconnect()
+        return result
+    }
+
+    public createCourse(course: Course) {
+        const result = this.driver.connect('courses').create(course.toJSON())
+        this.driver.disconnect()
+        return result
+    }
+
+    public listInscriptions() {
+        const result = this.driver.connect('inscriptions').all()
+        this.driver.disconnect()
+        return result
+    }
+
+    public createInscription(student: Student, course: Course) {
+        const inscription = InscriptionAggregate.enroll(student, course)
+        const result = this.driver.connect('inscriptions').create(inscription.toJSON())
+        this.driver.disconnect()
+        return result
     }
 }
 ```
 
-`User` expresses the user data that crosses the boundary. `UsersRegistry` is a
-boundary object of the context and `createUser()` is one concrete capability
-that it exposes.
-
-This definition focuses on the interaction the context makes available. The
-port keeps its identity as one boundary capability while making its data and
-action explicit.
-
-The port is the executable object that this context exposes. Types help
-describe it and make its boundary explicit.
+`Example` is a boundary object of the context. Each static method is one
+concrete capability it exposes. The port connects the boundary to a driver,
+uses domain concepts internally, and keeps infrastructure details out of the
+caller.
 
 This is the normal flow inside the context boundary:
 
@@ -83,10 +107,23 @@ capability and uses domain capabilities.
 
 As the context grows, you can keep several port modules at the context root.
 
-```ts title="users/registry.ts"
-export class UsersRegistry {
-    public async listUsers(): Promise<User[]> {
-        // ...
+```ts title="enrollment/courses.ts"
+import { CoursesService } from './application/services.ts'
+import { Course } from './domain/courses.ts'
+
+export class CoursesPort {
+    constructor(private readonly service: CoursesService) {}
+
+    public all(): Record<string, unknown>[] {
+        return this.service.all()
+    }
+
+    public create(name: string, description: string, hours: number): boolean {
+        return this.service.create(new Course(name, description, hours))
+    }
+
+    public delete(course: Course): boolean {
+        return this.service.delete(course)
     }
 }
 ```
@@ -110,9 +147,10 @@ in the generated folders.
 
 ```mermaid
 flowchart TD
-    users["users/"] --> registry["registry.ts"]
-    users --> application["application/"]
-    users --> domain["domain/"]
+    enrollment["enrollment/"] --> examplePort["example-ports.ts"]
+    enrollment --> courses["courses.ts"]
+    enrollment --> application["application/"]
+    enrollment --> domain["domain/"]
 ```
 
 This layout keeps the context boundary visible from the top level. It also

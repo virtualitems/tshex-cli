@@ -1,8 +1,7 @@
 ### Data
 
 The data contracts define how the application layer interacts with plain source
-records.
-They separate connection management, raw record access, and domain
+records. They separate connection management, raw record access, and domain
 transformation so that a context can change drivers without rewriting its use
 cases.
 
@@ -15,69 +14,79 @@ The generated structure splits this concern into four files:
 
 #### Capabilities
 
-`capabilities.ts` declares the operation interfaces that a manager or repository
-can implement to advertise what it supports.
+`capabilities.ts` declares the operation interfaces that a manager implements
+to advertise what it supports.
 
 ```ts title="shared/application/data/capabilities.ts"
-export interface Listable {
-    all(): Generic | Promise<Generic[]>
+export interface Listable<DataShape extends Generic = Generic> {
+    all(): DataShape[]
 }
 
-export interface Filterable {
-    filter(selector: unknown): Generic | Promise<Generic[]>
+export interface Creatable<DataShape extends Generic = Generic, Feedback = unknown> {
+    create(data: DataShape): Feedback
 }
 
-export interface Sortable {
-    sort(selector: unknown): Generic | Promise<Generic[]>
+export interface Deletable<Selector = unknown, Feedback = unknown> {
+    delete(selector: Selector): Feedback
 }
 
-export interface Creatable {
-    create(data: unknown): unknown
-}
-
-export interface Updatable {
-    update(selector: unknown, data: unknown): unknown
-}
-
-export interface Deletable {
-    delete(selector: unknown): unknown
-}
-
-export interface Aggregatable {
-    aggregate(selector: unknown): unknown
-}
-
-export interface Relatable {
-    selectRelated(...args: unknown[]): unknown
-    prefetchRelated(...args: unknown[]): unknown
-}
+// Also available: Filterable, Sortable, Updatable, Aggregatable, Relatable
 ```
 
 Implement only the interfaces that the manager actually supports. Adding
-`Filterable` to a class makes the filtering capability explicit and
-discoverable without adding it to the base class.
+`Creatable` to a class makes the creation capability explicit and discoverable
+without adding it to the base class.
 
-#### Driver Adapter
+```ts title="enrollment/application/managers.ts"
+import { DataManager } from '../shared/application/data/managers.ts'
+import type {
+    Listable,
+    Creatable,
+    Deletable
+} from '../shared/application/data/capabilities.ts'
+import type { Course } from '../domain/courses.ts'
+import type { Student } from '../domain/students.ts'
+import type { Inscription } from '../domain/inscriptions.ts'
 
-`DriverAdapter` is responsible for connecting to a data source and returning an
-enabled `DataManager`.
+type Generic = Record<string, unknown>
 
-```ts title="shared/application/data/drivers.ts"
-import { DataManager } from './managers.js'
+export type CourseData = ReturnType<Course['toJSON']>
+export type StudentData = ReturnType<Student['toJSON']>
+export type InscriptionData = ReturnType<Inscription['toJSON']>
 
-export abstract class DriverAdapter<M extends DataManager = DataManager> {
-    public abstract connect(...args: unknown[]): Promise<M>
+export class InMemoryDatabaseManager
+    extends DataManager
+    implements Listable, Creatable, Deletable
+{
+    [property: string]: unknown
 
-    public abstract disconnect(): Promise<unknown>
+    constructor(private records: Generic[]) {
+        super()
+    }
+
+    public all(): Generic[] {
+        return this.records
+    }
+
+    public create(data: Generic): boolean {
+        this.records.push(data)
+        return true
+    }
+
+    public delete(selector: Partial<Generic>): boolean {
+        const before = this.records.length
+        this.records = this.records.filter((record) =>
+            Object.entries(selector).every(([key, value]) => record[key] !== value)
+        )
+        return this.records.length < before
+    }
 }
 ```
 
-The `connect()` method returns a manager that can read or manipulate raw data.
-The `disconnect()` method closes the interaction when the work is finished.
-
 #### Data Manager
 
-`DataManager` is responsible for exposing plain source data.
+`DataManager` is the base contract for any data source. `DatasetManager`
+extends it with set operations for contexts that need to combine collections.
 
 ```ts title="shared/application/data/managers.ts"
 export abstract class DataManager<T = Record<string, unknown>> {
@@ -87,141 +96,164 @@ export abstract class DataManager<T = Record<string, unknown>> {
 export abstract class DatasetManager<T = Record<string, unknown>> extends DataManager<T> {
     [property: string]: unknown
 
-    public abstract union(other: Array<T>): Promise<Array<T>>
-    public abstract intersection(other: Array<T>): Promise<Array<T>>
-    public abstract difference(other: Array<T>): Promise<Array<T>>
-    public abstract symmetricDifference(other: Array<T>): Promise<Array<T>>
-    public abstract complement(other: Array<T>): Promise<Array<T>>
+    public abstract union(other: Array<T>): Array<T>
+    public abstract intersection(other: Array<T>): Array<T>
+    public abstract difference(other: Array<T>): Array<T>
+    public abstract symmetricDifference(other: Array<T>): Array<T>
+    public abstract complement(other: Array<T>): Array<T>
 }
 ```
 
-`DataManager` is the base contract for any data source. `DatasetManager` extends
-it with set operations for contexts that need to combine collections.
-Add operation capabilities from `capabilities.ts` to concrete implementations
-as needed.
+Extend `DataManager` to implement a concrete data source. The manager exposes
+raw data without domain transformation. The `InMemoryDatabaseManager` above
+extends `DataManager` and implements `Listable`, `Creatable`, and `Deletable`.
 
-#### Implementation
+#### Driver Adapter
 
-In the following example we implement an in-memory manager and its driver.
+`DriverAdapter` is responsible for connecting to a data source and returning an
+enabled `DataManager`.
 
-```ts title="users/adapters/memory-users-driver.ts"
-import { DriverAdapter } from '../../shared/application/data/drivers.js'
-import { DataManager } from '../../shared/application/data/managers.js'
+```ts title="shared/application/data/drivers.ts"
+export abstract class DriverAdapter<M extends DataManager = DataManager> {
+    [property: string]: unknown
 
-type UserRecord = {
-    id: string
-    email: string
-    active: boolean | null
+    public abstract connect(...args: unknown[]): M
+
+    public abstract disconnect(): unknown
 }
+```
 
-class MemoryUsersManager extends DataManager<UserRecord> {
-    public constructor(private readonly rows: Array<UserRecord>) {
+Extend `DriverAdapter` to wrap a concrete data source. The driver connects to
+the source, returns an enabled manager, and disconnects when the work is done.
+
+```ts title="enrollment/application/database.ts"
+import { DriverAdapter } from '../shared/application/data/drivers.ts'
+import { InMemoryDatabaseManager } from './managers.ts'
+
+type Generic = Record<string, unknown>
+
+export type Database = Record<string, Generic[]>
+
+export class InMemoryDatabaseDriver extends DriverAdapter<InMemoryDatabaseManager> {
+    [property: string]: unknown
+
+    private manager: InMemoryDatabaseManager | null = null
+
+    constructor(private readonly database: Database) {
         super()
     }
 
-    public async all(): Promise<Array<UserRecord>> {
-        return this.rows
-    }
-}
+    public connect(collectionKey: string): InMemoryDatabaseManager {
+        if (this.database[collectionKey] === undefined) {
+            this.database[collectionKey] = []
+        }
 
-export class MemoryUsersDriver extends DriverAdapter<MemoryUsersManager> {
-    public constructor(private readonly rows: Array<UserRecord>) {
-        super()
-    }
-
-    public async connect(): Promise<MemoryUsersManager> {
-        return new MemoryUsersManager(this.rows)
+        this.manager = new InMemoryDatabaseManager(this.database[collectionKey])
+        return this.manager
     }
 
-    public async disconnect(): Promise<void> {
-        return undefined
+    public disconnect(): void {
+        this.manager = null
     }
 }
 ```
 
-`MemoryUsersDriver` owns the connection contract. `MemoryUsersManager` owns the
-raw records. The application layer can use both without knowing whether the
-source is memory, SQL, or an HTTP-backed adapter.
-
-Put all your complex data operations in `DataManager`. `Repository` should only handle the transformation of raw records into domain representations. For example, if you need to relate users to their posts, implement that in a manager:
-
-```ts
-class ComplexUsersManager extends DataManager<EnrichedUserRecord> {
-    ...
-
-    public async findAllAndRelate(): Promise<Array<EnrichedUserRecord>> {
-        ...
-    }
-}
-```
+`InMemoryDatabaseDriver` owns the connection contract. `InMemoryDatabaseManager`
+owns the raw records. The application layer can use both without knowing whether
+the source is memory, SQL, or an HTTP-backed adapter.
 
 #### Repository
 
 `Repository` is responsible for transforming raw records into domain-oriented
-representations.
+representations. It holds a reference to the manager and requires `transform()`
+to map a raw record into a domain entity.
 
 ```ts title="shared/application/data/repositories.ts"
-import { type DataManager } from './managers.js'
-import { type DriverAdapter } from './drivers.js'
-
-export abstract class Repository<RawDataShape = Generic, EntityShape = Generic> {
+export abstract class Repository<
+    RawDataShape = Generic,
+    EntityShape = Generic,
+    M extends DataManager<RawDataShape> = DataManager<RawDataShape>
+> {
     [property: string]: unknown
 
-    public constructor(
-        public readonly driver: DriverAdapter<DataManager<RawDataShape>>
-    ) {}
+    public constructor(public readonly manager: M) {}
 
-    protected abstract transform(data: RawDataShape): EntityShape
+    protected abstract transform(data: RawDataShape, ...args: unknown[]): EntityShape
 }
 ```
 
-The base repository holds the driver and requires `transform()` to map a raw
-record into a domain representation. Data retrieval operations are not defined
-in the base class — add them explicitly in the concrete class using the
-capability interfaces from `capabilities.ts`.
+Data retrieval operations are not defined in the base class — add them
+explicitly in the concrete class using the capability interfaces from
+`capabilities.ts`.
 
-#### Repository Implementation
+```ts title="enrollment/application/repositories.ts"
+import { Repository } from '../shared/application/data/repositories.ts'
+import { InMemoryDatabaseManager } from './managers.ts'
+import type { CourseData, StudentData, InscriptionData } from './managers.ts'
+import { Course } from '../domain/courses.ts'
+import { Student } from '../domain/students.ts'
+import { Inscription } from '../domain/inscriptions.ts'
 
-A concrete repository extends the base class, declares the driver type, and
-implements `transform()`. Add capability interfaces for any additional operations.
+export class CoursesRepository extends Repository<CourseData, Course, InMemoryDatabaseManager> {
+    [property: string]: unknown
 
-```ts title="users/adapters/users-repository.ts"
-import { Repository } from '../../shared/application/data/repositories.js'
-import { type Listable, type Filterable } from '../../shared/application/data/capabilities.js'
-import { DriverAdapter } from '../../shared/application/data/drivers.js'
-import { DataManager } from '../../shared/application/data/managers.js'
-
-type UserRecord = { id: string; email: string; active: boolean | null }
-type UserView   = { id: string; email: string; active: boolean | null }
-
-export class UsersRepository
-    extends Repository<UserRecord, UserView>
-    implements Listable, Filterable
-{
-    public constructor(driver: DriverAdapter<DataManager<UserRecord>>) {
-        super(driver)
+    constructor(manager: InMemoryDatabaseManager) {
+        super(manager)
     }
 
-    public async all(): Promise<UserView[]> {
-        const connection = await this.driver.connect()
-        const raw = await (connection as DataManager<UserRecord> & Listable).all()
-        await this.driver.disconnect()
-        return (raw as UserRecord[]).map(this.transform)
+    protected transform(data: CourseData): Course {
+        return new Course(data.name, data.description, data.duration_hours)
     }
 
-    public async filter(selector: unknown): Promise<UserView[]> {
-        // implementation
-        return []
+    public create(course: Course): boolean {
+        return this.manager.create(course.toJSON())
     }
 
-    protected transform(data: UserRecord): UserView {
-        return { id: data.id, email: data.email, active: data.active }
+    public delete(course: Course): boolean {
+        return this.manager.delete(course.toJSON())
+    }
+}
+
+export class StudentsRepository extends Repository<StudentData, Student, InMemoryDatabaseManager> {
+    [property: string]: unknown
+
+    constructor(manager: InMemoryDatabaseManager) {
+        super(manager)
+    }
+
+    protected transform(data: StudentData): Student {
+        return new Student(data.name, data.email)
+    }
+
+    public create(student: Student): boolean {
+        return this.manager.create(student.toJSON())
+    }
+
+    public delete(student: Student): boolean {
+        return this.manager.delete(student.toJSON())
+    }
+}
+
+export class InscriptionsRepository extends Repository<InscriptionData, Inscription, InMemoryDatabaseManager> {
+    [property: string]: unknown
+
+    constructor(manager: InMemoryDatabaseManager) {
+        super(manager)
+    }
+
+    protected transform(data: InscriptionData, student: Student, course: Course): Inscription {
+        return new Inscription(student, course, data.enrolled_at)
+    }
+
+    public create(inscription: Inscription): boolean {
+        return this.manager.create(inscription.toJSON())
+    }
+
+    public delete(inscription: Inscription): boolean {
+        return this.manager.delete(inscription.toJSON())
     }
 }
 ```
-
-The repository declares what it supports through capabilities. Operations are
-explicit, not inherited from the base class.
 
 #### Example Flow
 
@@ -230,8 +262,7 @@ The normal flow of the data abstractions is the following:
 ```mermaid
 flowchart LR
     service[Service] --> repository[Repository]
-    repository --> driver[Driver]
-    driver --> manager["Data manager"]
+    repository --> manager["Data manager"]
     manager --> raw["Raw records"]
     repository --> transformed["Transformed records"]
     transformed --> service

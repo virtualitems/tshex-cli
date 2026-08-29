@@ -1,9 +1,8 @@
 ### Entities
 
 An entity is responsible for representing a domain concept with its own
-identity.
-Two entity instances refer to the same conceptual element when they share that
-identity, even if other attributes change over time.
+identity. Two entity instances refer to the same conceptual element when they
+share that identity, even if other attributes change over time.
 
 The generated template provides `Entity` as a base class for this pattern.
 
@@ -13,73 +12,119 @@ The generated template provides `Entity` as a base class for this pattern.
 
 ```ts title="shared/domain/entities.ts"
 export abstract class Entity {
-	public abstract equals(other: Entity): boolean
+    [property: string]: unknown
 
-	public toJSON(): Record<string, unknown> {
-		return this
-	}
+    public abstract equals(other: Entity): boolean
 
-	public toString(): string {
-		return String(this.constructor.name)
-	}
+    public toJSON(): Record<string, unknown> {
+        return this
+    }
+
+    public toString(): string {
+        return this.constructor.name
+    }
 }
 ```
 
-Every concrete entity must implement `equals()`. The generated base class also
-provides `toJSON()` and `toString()`.
+Every concrete entity must implement `equals()`. Override `toJSON()` to control
+the plain representation returned when the entity is serialized.
 
-#### First Entity
+#### Usage
 
-In the following example we model a user entity.
+In the following example we model the entities of a course enrollment context.
 
-```ts title="users/domain/user.ts"
-import { Entity } from '../../shared/domain/entities.js'
-import { Email } from '../../shared/domain/value-objects.js'
+```ts title="enrollment/domain/students.ts"
+import { Entity } from '../shared/domain/entities.ts'
 
-export class User extends Entity {
-	public constructor(
-		public readonly id: string,
-		public readonly email: Email,
-	) {
-		super()
-	}
+export class Student extends Entity {
+    [property: string]: unknown
 
-	public equals(other: Entity): boolean {
-		return other instanceof User && this.id === other.id
-	}
+    constructor(
+        public name: string,
+        public email: string
+    ) {
+        super()
+    }
+
+    public equals(other: Student): boolean {
+        return this.email === other.email
+    }
+
+    public override toJSON() {
+        return {
+            name: this.name,
+            email: this.email
+        }
+    }
 }
 ```
 
-The identity rule lives in `equals()`. The entity compares the `id`, not the
-email address, because the email can change while the entity still represents
-the same user.
+```ts title="enrollment/domain/courses.ts"
+import { Entity } from '../shared/domain/entities.ts'
 
-#### Included Behavior
+export class Course extends Entity {
+    [property: string]: unknown
 
-Now that the entity exists, the inherited helpers become useful.
+    constructor(
+        public name: string,
+        public description: string,
+        public duration_hours: number
+    ) {
+        super()
+    }
 
-```ts
-const user = new User('usr_1', Email.from('ada@example.com'))
+    public equals(other: Course): boolean {
+        return this.name === other.name
+    }
 
-user.toString()
-user.toJSON()
+    public override toJSON() {
+        return {
+            name: this.name,
+            description: this.description,
+            duration_hours: this.duration_hours
+        }
+    }
+}
 ```
 
-`toString()` returns the constructor name. `toJSON()` returns the instance as a
-plain record, which is convenient for simple serialization or inspection.
+```ts title="enrollment/domain/inscriptions.ts"
+import { Entity } from '../shared/domain/entities.ts'
+import { Course } from './courses.ts'
+import { Student } from './students.ts'
+
+export class Inscription extends Entity {
+    [property: string]: unknown
+
+    constructor(
+        public readonly student: Student,
+        public readonly course: Course,
+        public readonly enrolled_at: Date
+    ) {
+        super()
+    }
+
+    public equals(other: Inscription): boolean {
+        return this.student.equals(other.student) && this.course.equals(other.course)
+    }
+
+    public override toJSON() {
+        return {
+            student: this.student.toJSON(),
+            course: this.course.toJSON(),
+            enrolled_at: this.enrolled_at
+        }
+    }
+}
+```
 
 #### Equality Rules
 
 The most important design decision in an entity is the identity comparison.
 
-Correct identity candidates usually include:
-
-1. a stable identifier;
-2. a natural domain key that does not drift over time;
-3. a combination of fields that the domain treats as unique.
-
-Changing fields that are not part of the identity should not make `equals()`
-return `false` for the same conceptual entity.
+`Student` uses `email` as the identity because two students with the same email
+represent the same person. `Course` uses `name`. `Inscription` combines the
+student and course identities — two inscriptions are the same when both the
+student and the course match.
 
 > **Hint**
 > Keep `equals()` explicit and small. If the comparison starts depending on many

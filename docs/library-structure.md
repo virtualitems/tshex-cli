@@ -18,7 +18,7 @@ flowchart TD
     root["Library root"] --> types["types/"]
     root --> main["main.ts"]
     root --> shared["shared/"]
-    root --> users["users/"]
+    root --> enrollment["enrollment/"]
 ```
 
 `types/` groups the root-level type declarations. `main.ts` starts as a
@@ -69,7 +69,7 @@ capability.
 
 ```mermaid
 flowchart TD
-    contexts["Contexts"] --> users["users/"]
+    contexts["Contexts"] --> enrollment["enrollment/"]
     contexts --> billing["billing/"]
     contexts --> inventory["inventory/"]
     contexts --> sales["sales/"]
@@ -85,10 +85,10 @@ Every generated context starts with the same internal structure.
 
 ```mermaid
 flowchart TD
-    users["users/"] --> ports["example-ports.ts"]
-    users --> adapters["adapters/"]
-    users --> application["application/"]
-    users --> domain["domain/"]
+    enrollment["enrollment/"] --> ports["example-ports.ts"]
+    enrollment --> adapters["adapters/"]
+    enrollment --> application["application/"]
+    enrollment --> domain["domain/"]
 ```
 
 `example-ports.ts` is an example module in the root communication surface of
@@ -188,6 +188,22 @@ flowchart TD
 application services use domain capabilities, while adapters can depend on
 ports and third-party libraries. The port branch stops at the boundary because
 what exists beyond that port depends on the system that implements it.
+
+```ts title="main.ts"
+import { Example } from './enrollment/example-ports.ts'
+import { Student } from './enrollment/domain/students.ts'
+import { Course } from './enrollment/domain/courses.ts'
+
+const example = new Example()
+const student = new Student('Ada Lovelace', 'ada@example.com')
+const course = new Course('Mathematics', 'Fundamentals of algebra and calculus', 40)
+
+example.createStudent(student)
+example.createCourse(course)
+example.createInscription(student, course)
+
+console.log(example.listInscriptions())
+```
 
 #### Next Step
 
