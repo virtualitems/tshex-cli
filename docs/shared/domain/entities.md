@@ -35,25 +35,26 @@ In the following example we model the entities of a course enrollment context.
 
 ```ts title="enrollment/domain/students.ts"
 import { Entity } from '../shared/domain/entities.ts'
+import { Email } from '../shared/domain/value-objects.ts'
 
 export class Student extends Entity {
     [property: string]: unknown
 
     constructor(
         public name: string,
-        public email: string
+        public email: Email
     ) {
         super()
     }
 
     public equals(other: Student): boolean {
-        return this.email === other.email
+        return this.email.equals(other.email)
     }
 
     public override toJSON() {
         return {
             name: this.name,
-            email: this.email
+            email: this.email.value
         }
     }
 }
@@ -121,10 +122,11 @@ export class Inscription extends Entity {
 
 The most important design decision in an entity is the identity comparison.
 
-`Student` uses `email` as the identity because two students with the same email
-represent the same person. `Course` uses `name`. `Inscription` combines the
-student and course identities — two inscriptions are the same when both the
-student and the course match.
+`Student` uses `Email` as the identity because two students with the same
+address represent the same person. `equals()` delegates to `Email.equals()` so
+the comparison rule lives in the value object. `Course` uses `name`.
+`Inscription` combines the student and course identities — two inscriptions are
+the same when both the student and the course match.
 
 > **Hint**
 > Keep `equals()` explicit and small. If the comparison starts depending on many

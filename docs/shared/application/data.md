@@ -193,6 +193,7 @@ import type { CourseData, StudentData, InscriptionData } from './managers.ts'
 import { Course } from '../domain/courses.ts'
 import { Student } from '../domain/students.ts'
 import { Inscription } from '../domain/inscriptions.ts'
+import { Email } from '../shared/domain/value-objects.ts'
 
 export class CoursesRepository extends Repository<CourseData, Course, InMemoryDatabaseManager> {
     [property: string]: unknown
@@ -222,7 +223,7 @@ export class StudentsRepository extends Repository<StudentData, Student, InMemor
     }
 
     protected transform(data: StudentData): Student {
-        return new Student(data.name, data.email)
+        return new Student(data.name, Email.from(data.email))
     }
 
     public create(student: Student): boolean {

@@ -193,9 +193,10 @@ what exists beyond that port depends on the system that implements it.
 import { Example } from './enrollment/example-ports.ts'
 import { Student } from './enrollment/domain/students.ts'
 import { Course } from './enrollment/domain/courses.ts'
+import { Email } from './shared/domain/value-objects.ts'
 
 const example = new Example()
-const student = new Student('Ada Lovelace', 'ada@example.com')
+const student = new Student('Ada Lovelace', Email.from('ada@example.com'))
 const course = new Course('Mathematics', 'Fundamentals of algebra and calculus', 40)
 
 example.createStudent(student)
