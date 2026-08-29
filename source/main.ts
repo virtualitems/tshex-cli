@@ -9,12 +9,12 @@ import { program } from 'commander'
 import fs from 'node:fs'
 import path from 'node:path'
 import readline from 'node:readline/promises'
-import { stdin as input, stdout as output } from 'node:process'
+import { stdin, stdout } from 'node:process'
 
 // FUNCTIONS
 
 function readPackageJson() {
-    const filePath = path.join(import.meta.dirname, '..', 'package.json')
+    const filePath = path.join(import.meta.dirname!, '..', 'package.json')
     const fileContents = fs.readFileSync(filePath, 'utf-8')
     return JSON.parse(fileContents)
 }
@@ -77,19 +77,35 @@ function executeCreateTests(
                 continue
             }
 
-            if (ignoredSourceDir !== undefined && sourcePath.startsWith(ignoredSourceDir)) {
+            if (
+                ignoredSourceDir !== undefined &&
+                sourcePath.startsWith(ignoredSourceDir)
+            ) {
                 continue
             }
 
-            if (fs.existsSync(destinationPath) && fs.statSync(destinationPath).isDirectory() === false) {
+            if (
+                fs.existsSync(destinationPath) &&
+                fs.statSync(destinationPath).isDirectory() === false
+            ) {
                 continue
             }
 
-            executeCreateTests(sourcePath, destinationPath, fileContents, ignoredSourceDir, rootSourceDir)
+            executeCreateTests(
+                sourcePath,
+                destinationPath,
+                fileContents,
+                ignoredSourceDir,
+                rootSourceDir
+            )
             continue
         }
 
-        if (entry.isFile() && entry.name.endsWith('.ts') && fs.existsSync(destinationPath) === false) {
+        if (
+            entry.isFile() &&
+            entry.name.endsWith('.ts') &&
+            fs.existsSync(destinationPath) === false
+        ) {
             fs.writeFileSync(destinationPath, fileContents)
         }
     }
@@ -104,10 +120,12 @@ async function ensureTestsDirectory(testsRootDir: string) {
         return
     }
 
-    const rl = readline.createInterface({ input, output })
+    const rl = readline.createInterface({ input: stdin, output: stdout })
 
     try {
-        const answer = await rl.question(`Tests directory does not exist at ${testsRootDir}. Create it? (y/N) `)
+        const answer = await rl.question(
+            `Tests directory does not exist at ${testsRootDir}. Create it? (y/N) `
+        )
 
         if (answer.trim().toLowerCase() !== 'y') {
             return false
@@ -121,7 +139,7 @@ async function ensureTestsDirectory(testsRootDir: string) {
 }
 
 async function main(program: typeof import('commander').program) {
-    const templatesDir = path.join(import.meta.dirname, '..', 'templates')
+    const templatesDir = path.join(import.meta.dirname!, '..', 'templates')
 
     const options = program.opts()
 
@@ -182,7 +200,9 @@ async function main(program: typeof import('commander').program) {
         const testsDir = path.join(testsRootDir, path.basename(sourceDir))
 
         if (testsDir === sourceDir) {
-            program.error('Tests destination directory cannot be the same as the source directory')
+            program.error(
+                'Tests destination directory cannot be the same as the source directory'
+            )
         }
 
         executeCreateTests(sourceDir, testsDir, testsTemplateContents, testsRootDir)
@@ -198,7 +218,10 @@ program
     .option('-P, --project <name>', "creates a new project with it's shared directory")
     .option('-C, --context <name>', 'creates a new context')
     .option('-R, --react', 'creates a React context with --context')
-    .option('-T, --tests <path>', 'creates a .ts tests structure from an existing directory')
+    .option(
+        '-T, --tests <path>',
+        'creates a .ts tests structure from an existing directory'
+    )
     .option('--dir <path>', 'sets the directory to create the new item')
     .parse(process.argv)
 
