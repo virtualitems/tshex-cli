@@ -17,7 +17,7 @@ export abstract class Event {
 export abstract class EventHandler {
     [property: string]: unknown
 
-    public abstract handle(event: Event): Promise<void>
+    public abstract handle(event: Event): void
 } //:: class
 
 /**
