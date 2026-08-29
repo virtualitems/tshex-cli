@@ -2,6 +2,8 @@
  * @description HTTP error with a specific status code and message.
  */
 export class HttpError extends Error {
+    [property: string]: unknown
+
     public static readonly messages: { [code: number]: string } = Object.freeze({
         400: 'Bad Request',
         401: 'Unauthorized',
