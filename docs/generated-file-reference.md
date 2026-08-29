@@ -85,8 +85,9 @@ The generated template also includes a small set of data-access abstractions.
 
 | File | Responsibility |
 | --- | --- |
+| `shared/application/data/capabilities.ts` | Declares the operation capability interfaces: `Listable`, `Filterable`, `Sortable`, `Creatable`, `Updatable`, `Deletable`, `Aggregatable`, and `Relatable`. |
 | `shared/application/data/drivers.ts` | Declares `DriverAdapter`, the connection contract with a data source. |
-| `shared/application/data/managers.ts` | Declares `DataManager`, `DatasetManager`, and plain-record operations. |
+| `shared/application/data/managers.ts` | Declares `DataManager` and `DatasetManager`. |
 | `shared/application/data/repositories.ts` | Declares `Repository`, which transforms raw records into domain representations. |
 
 These contracts belong to the application layer because they define how the

@@ -6,11 +6,56 @@ They separate connection management, raw record access, and domain
 transformation so that a context can change drivers without rewriting its use
 cases.
 
-The generated structure splits this concern into three files:
+The generated structure splits this concern into four files:
 
-1. `drivers.ts` for connection adapters;
-2. `managers.ts` for plain-record operations;
-3. `repositories.ts` for record-to-domain transformation.
+1. `capabilities.ts` for operation capability interfaces;
+2. `drivers.ts` for connection adapters;
+3. `managers.ts` for plain-record operations;
+4. `repositories.ts` for record-to-domain transformation.
+
+#### Capabilities
+
+`capabilities.ts` declares the operation interfaces that a manager or repository
+can implement to advertise what it supports.
+
+```ts title="shared/application/data/capabilities.ts"
+export interface Listable {
+    all(): Generic | Promise<Generic[]>
+}
+
+export interface Filterable {
+    filter(selector: unknown): Generic | Promise<Generic[]>
+}
+
+export interface Sortable {
+    sort(selector: unknown): Generic | Promise<Generic[]>
+}
+
+export interface Creatable {
+    create(data: unknown): unknown
+}
+
+export interface Updatable {
+    update(selector: unknown, data: unknown): unknown
+}
+
+export interface Deletable {
+    delete(selector: unknown): unknown
+}
+
+export interface Aggregatable {
+    aggregate(selector: unknown): unknown
+}
+
+export interface Relatable {
+    selectRelated(...args: unknown[]): unknown
+    prefetchRelated(...args: unknown[]): unknown
+}
+```
+
+Implement only the interfaces that the manager actually supports. Adding
+`Filterable` to a class makes the filtering capability explicit and
+discoverable without adding it to the base class.
 
 #### Driver Adapter
 
@@ -36,18 +81,24 @@ The `disconnect()` method closes the interaction when the work is finished.
 
 ```ts title="shared/application/data/managers.ts"
 export abstract class DataManager<T = Record<string, unknown>> {
-    public none(): Array<T> {
-        return []
-    }
+    [property: string]: unknown
+}
 
-    public abstract all(): Promise<Array<T>>
+export abstract class DatasetManager<T = Record<string, unknown>> extends DataManager<T> {
+    [property: string]: unknown
+
+    public abstract union(other: Array<T>): Promise<Array<T>>
+    public abstract intersection(other: Array<T>): Promise<Array<T>>
+    public abstract difference(other: Array<T>): Promise<Array<T>>
+    public abstract symmetricDifference(other: Array<T>): Promise<Array<T>>
+    public abstract complement(other: Array<T>): Promise<Array<T>>
 }
 ```
 
-The base class provides `none()` as an explicit empty result and requires
-`all()` for retrieving records. The generated template also includes operation
-contracts such as `Filterable`, `Creatable`, and `Updatable`, plus the
-`DatasetManager` extension for set operations.
+`DataManager` is the base contract for any data source. `DatasetManager` extends
+it with set operations for contexts that need to combine collections.
+Add operation capabilities from `capabilities.ts` to concrete implementations
+as needed.
 
 #### Implementation
 
@@ -113,76 +164,64 @@ representations.
 import { type DataManager } from './managers.js'
 import { type DriverAdapter } from './drivers.js'
 
-export abstract class Repository<
-    DataShape extends Record<string, unknown> = Record<string, unknown>,
-    EntityShape extends Record<string, unknown> = Record<string, unknown>
-> {
-    public constructor(public readonly driver: DriverAdapter<DataManager<DataShape>>) {}
+export abstract class Repository<RawDataShape = Generic, EntityShape = Generic> {
+    [property: string]: unknown
 
-    public async all(): Promise<Array<EntityShape>> {
-        const connection = await this.driver.connect()
-        const raw = await connection.all()
-        const entities = this.transformList(raw)
-        await this.driver.disconnect()
-        return entities
-    }
+    public constructor(
+        public readonly driver: DriverAdapter<DataManager<RawDataShape>>
+    ) {}
 
-    protected transformList(data: Array<DataShape>): Array<EntityShape> {
-        return data.map(this.transform)
-    }
-
-    protected abstract transform(data: DataShape): EntityShape
+    protected abstract transform(data: RawDataShape): EntityShape
 }
 ```
 
-The base repository already defines the `all()` flow. A concrete repository only
-needs to implement `transform()`.
+The base repository holds the driver and requires `transform()` to map a raw
+record into a domain representation. Data retrieval operations are not defined
+in the base class — add them explicitly in the concrete class using the
+capability interfaces from `capabilities.ts`.
 
 #### Repository Implementation
 
-Now that the driver exists, a repository can translate raw records into a shape
-that the rest of the context can use.
+A concrete repository extends the base class, declares the driver type, and
+implements `transform()`. Add capability interfaces for any additional operations.
 
 ```ts title="users/adapters/users-repository.ts"
 import { Repository } from '../../shared/application/data/repositories.js'
+import { type Listable, type Filterable } from '../../shared/application/data/capabilities.js'
 import { DriverAdapter } from '../../shared/application/data/drivers.js'
 import { DataManager } from '../../shared/application/data/managers.js'
 
-type UserRecord = {
-    id: string
-    email: string
-    active: boolean | null
-}
+type UserRecord = { id: string; email: string; active: boolean | null }
+type UserView   = { id: string; email: string; active: boolean | null }
 
-type UserView = {
-    id: string
-    email: string
-    active: boolean | null
-}
-
-export class UsersRepository extends Repository<UserRecord, UserView> {
+export class UsersRepository
+    extends Repository<UserRecord, UserView>
+    implements Listable, Filterable
+{
     public constructor(driver: DriverAdapter<DataManager<UserRecord>>) {
         super(driver)
     }
 
+    public async all(): Promise<UserView[]> {
+        const connection = await this.driver.connect()
+        const raw = await (connection as DataManager<UserRecord> & Listable).all()
+        await this.driver.disconnect()
+        return (raw as UserRecord[]).map(this.transform)
+    }
+
+    public async filter(selector: unknown): Promise<UserView[]> {
+        // implementation
+        return []
+    }
+
     protected transform(data: UserRecord): UserView {
-        return {
-            id: data.id,
-            email: data.email,
-            active: data.active,
-        }
+        return { id: data.id, email: data.email, active: data.active }
     }
 }
 ```
 
-This repository does not own the connection lifecycle because `Repository`
-already handles it. Its responsibility is the mapping between raw source data
-and the representation used by the context.
-
-> **Warning**
-> The generated `Repository` only implements `all()`. If the project needs
-> filtering, creation, or updates, add those operations explicitly instead of
-> assuming they already exist in the base class.
+The repository declares what it supports through capabilities. Operations are
+explicit, not inherited from the base class.
 
 #### Example Flow
 
