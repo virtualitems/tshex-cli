@@ -2,14 +2,14 @@
  * @description Operates on a data source using plain objects and arrays.
  * It exposes the raw data without transforming it.
  */
-export abstract class DataManager {
+export abstract class DataManager<T = Record<string, unknown>> {
     [property: string]: unknown
 } //:: class
 
 /**
  * @description Extends a data manager with set operations over data collections.
  */
-export abstract class DatasetManager<T = Record<string, unknown>> extends DataManager {
+export abstract class DatasetManager<T = Record<string, unknown>> extends DataManager<T> {
     [property: string]: unknown
 
     public abstract union(other: Array<T>): Promise<Array<T>>
