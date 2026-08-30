@@ -99,7 +99,7 @@ export class Email extends ValueObject<string> {
         if (super.isValid(value) === false) return false
 
         return (
-            'string' === typeof value && VALID_EMAIL_REGEX.test(value as string)
+            'string' === typeof value && VALID_EMAIL_REGEX.test(value)
         )
     }
 
