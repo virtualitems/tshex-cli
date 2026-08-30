@@ -94,6 +94,7 @@ core/
 |   |   |-- http/
 |   |   |   `-- errors.ts
 |   |   |-- loggers.ts
+|   |   |-- providers.ts
 |   |   |-- services.ts
 |   |   `-- validations.ts
 |   `-- domain/
@@ -246,6 +247,7 @@ From this point on, the guide is split into dedicated documents under `docs/`.
 - [shared/application/events.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/events.md)
 - [shared/application/http/errors.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/http/errors.md)
 - [shared/application/loggers.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/loggers.md)
+- [shared/application/providers.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/providers.md)
 - [shared/application/services.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/services.md)
 - [shared/application/validations.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/validations.md)
 
