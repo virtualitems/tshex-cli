@@ -7,7 +7,7 @@ export abstract class Entity {
 
     public abstract equals(other: Entity): boolean
 
-    public toJSON(): Record<string, unknown> {
+    public toJSON(): this {
         return this
     }
 
