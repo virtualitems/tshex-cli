@@ -86,16 +86,13 @@ core/
 |-- shared/
 |   |-- application/
 |   |   |-- data/
+|   |   |   |-- capabilities.ts
 |   |   |   |-- drivers.ts
 |   |   |   |-- managers.ts
 |   |   |   `-- repositories.ts
 |   |   |-- events.ts
 |   |   |-- http/
-|   |   |   |-- errors.ts
-|   |   |   |-- handlers.ts
-|   |   |   |-- json-api.ts
-|   |   |   |-- json-web-token.ts
-|   |   |   `-- opengraph.ts
+|   |   |   `-- errors.ts
 |   |   |-- loggers.ts
 |   |   |-- services.ts
 |   |   `-- validations.ts
@@ -248,10 +245,6 @@ From this point on, the guide is split into dedicated documents under `docs/`.
 - [shared/application/data](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/data.md)
 - [shared/application/events.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/events.md)
 - [shared/application/http/errors.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/http/errors.md)
-- [shared/application/http/handlers.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/http/handlers.md)
-- [shared/application/http/json-api.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/http/json-api.md)
-- [shared/application/http/json-web-token.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/http/json-web-token.md)
-- [shared/application/http/opengraph.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/http/opengraph.md)
 - [shared/application/loggers.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/loggers.md)
 - [shared/application/services.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/services.md)
 - [shared/application/validations.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/validations.md)

@@ -63,21 +63,13 @@ contracts that adapters and services can share.
 #### Shared HTTP Files
 
 The `shared/application/http` directory groups the framework-agnostic HTTP
-boundary and the type-only specifications for common web content formats.
+boundary contracts.
 
 | File | Responsibility |
 | --- | --- |
-| `shared/application/http/handlers.ts` | Declares `HttpRequestHandler` and `HttpMiddleware`. |
 | `shared/application/http/errors.ts` | Declares `HttpError`. |
-| `shared/application/http/json-api.ts` | Type-only JSON:API v1.1 document, resource, and Atomic Operations declarations. |
-| `shared/application/http/json-web-token.ts` | Type-only JOSE/JWT declarations (JWK, JWS, JWE, JWT claims). |
-| `shared/application/http/opengraph.ts` | Type-only Open Graph, Twitter Card, and social metadata declarations. |
 
-`handlers.ts` and `errors.ts` are the only files in this directory with
-runtime code. `json-api.ts`, `json-web-token.ts`, and `opengraph.ts` contain
-compile-time structure only; they describe the shape of external formats
-without implementing parsing, validation, or serialization. Each file is
-documented in its own page under `shared/application/http/*.md`.
+`errors.ts` is documented in its own page under `shared/application/http/errors.md`.
 
 #### Shared Data Files
 
