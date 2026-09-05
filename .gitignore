@@ -2,6 +2,8 @@
 /.credentials
 /.ignore
 /.vscode
+/.todo
+/.worktree
 
 # Knowledge
 /.wiki
@@ -12,10 +14,10 @@
 /.tests
 
 # AI
-/.agents
-/.claude
-/.codex
-/.opencode
+/.agents/skills
+/.claude/skills
+/.codex/skills
+/.opencode/skills
 
 # SQLite database files
 *.db
