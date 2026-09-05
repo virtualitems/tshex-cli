@@ -1,0 +1,1012 @@
+# Git commands
+
+## FORBIDDEN
+
+prefix_rule(
+    pattern = ["git", "archive", "--remote"],
+    decision = "forbidden",
+)
+
+prefix_rule(
+    pattern = ["git", "clone"],
+    decision = "forbidden",
+)
+
+prefix_rule(
+    pattern = ["git", "fetch"],
+    decision = "forbidden",
+)
+
+prefix_rule(
+    pattern = ["git", "lfs", "clone"],
+    decision = "forbidden",
+)
+
+prefix_rule(
+    pattern = ["git", "lfs", "fetch"],
+    decision = "forbidden",
+)
+
+prefix_rule(
+    pattern = ["git", "lfs", "pull"],
+    decision = "forbidden",
+)
+
+prefix_rule(
+    pattern = ["git", "lfs", "push"],
+    decision = "forbidden",
+)
+
+prefix_rule(
+    pattern = ["git", "ls-remote"],
+    decision = "forbidden",
+)
+
+prefix_rule(
+    pattern = ["git", "p4", "submit"],
+    decision = "forbidden",
+)
+
+prefix_rule(
+    pattern = ["git", "p4", "sync"],
+    decision = "forbidden",
+)
+
+prefix_rule(
+    pattern = ["git", "pull"],
+    decision = "forbidden",
+)
+
+prefix_rule(
+    pattern = ["git", "push"],
+    decision = "forbidden",
+)
+
+prefix_rule(
+    pattern = ["git", "remote", "show"],
+    decision = "forbidden",
+)
+
+prefix_rule(
+    pattern = ["git", "remote", "update"],
+    decision = "forbidden",
+)
+
+prefix_rule(
+    pattern = ["git", "send-email"],
+    decision = "forbidden",
+)
+
+prefix_rule(
+    pattern = ["git", "submodule", "add"],
+    decision = "forbidden",
+)
+
+prefix_rule(
+    pattern = ["git", "submodule", "update"],
+    decision = "forbidden",
+)
+
+prefix_rule(
+    pattern = ["git", "svn", "dcommit"],
+    decision = "forbidden",
+)
+
+prefix_rule(
+    pattern = ["git", "svn", "fetch"],
+    decision = "forbidden",
+)
+
+prefix_rule(
+    pattern = ["git", "svn", "rebase"],
+    decision = "forbidden",
+)
+
+## PROMPT
+
+prefix_rule(
+    pattern = ["git", "branch", "--delete"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["git", "branch", "-D"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["git", "branch", "-d"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["git", "checkout"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["git", "clean"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["git", "commit"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["git", "filter-branch"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["git", "filter-repo"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["git", "gc"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["git", "mv"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["git", "prune"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["git", "rebase"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["git", "reflog", "delete"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["git", "reflog", "expire"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["git", "remote", "remove"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["git", "remote", "rename"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["git", "remote", "set-url"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["git", "reset"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["git", "restore"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["git", "rm"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["git", "stash", "clear"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["git", "stash", "drop"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["git", "stash", "pop"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["git", "switch"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["git", "tag", "-d"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["git", "tag", "--delete"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["git", "tag", "-d"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["git", "update-ref"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["git", "worktree", "prune"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["git", "worktree", "remove"],
+    decision = "prompt",
+)
+
+## ALLOW
+
+prefix_rule(
+    pattern = ["git", "bisect"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "blame"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "branch", "--list"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "branch", "--show-current"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "branch", "-a"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "branch", "-l"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "branch", "-r"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "branch", "-vv"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "cat-file"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "check-ignore"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "clean", "-n"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "clean", "-nd"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "clean", "-nfd"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "config", "--get"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "config", "--get-all"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "config", "--list"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "config", "-l"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "count-objects"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "describe"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "diff"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "diff-files"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "diff-index"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "diff-tree"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "for-each-ref"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "grep"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "log"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "ls-files"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "ls-tree"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "merge-base"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "name-rev"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "reflog", "show"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "remote", "-v"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "rev-list"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "rev-parse"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "shortlog"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "show"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "show-ref"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "stash", "list"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "stash", "show"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "status"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "submodule", "status"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "tag", "--list"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "tag", "-l"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["git", "worktree", "list"],
+    decision = "allow",
+)
+
+# PowerShell cmdlets
+
+## FORBIDDEN
+
+prefix_rule(
+    pattern = ["Unblock-File"],
+    decision = "forbidden",
+)
+
+## PROMPT
+
+prefix_rule(
+    pattern = ["Clear-Content"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["Compress-Archive"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["Copy-Item"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["Enter-PSSession"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["Expand-Archive"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["Export-Clixml"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["Export-Csv"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["Install-Module"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["Install-Package"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["Invoke-Command"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["Invoke-Expression"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["Invoke-RestMethod"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["Invoke-WebRequest"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["Move-Item"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["New-PSSession"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["Out-File"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["Register-ScheduledTask"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["Remove-Item"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["Remove-ItemProperty"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["Rename-Item"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["Restart-Service"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["Set-Acl"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["Set-Content"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["Set-ExecutionPolicy"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["Set-Item"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["Set-ItemProperty"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["Set-Service"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["Start-Process"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["Start-Service"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["Stop-Process"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["Stop-Service"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["Tee-Object"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["Uninstall-Module"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["Uninstall-Package"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["Unregister-ScheduledTask"],
+    decision = "prompt",
+)
+
+prefix_rule(
+    pattern = ["Update-Module"],
+    decision = "prompt",
+)
+
+## ALLOW
+
+prefix_rule(
+    pattern = ["Add-Content"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Compare-Object"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Convert-Path"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["ConvertFrom-Csv"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["ConvertFrom-Json"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["ConvertFrom-StringData"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["ConvertTo-Csv"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["ConvertTo-Json"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["ForEach-Object"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Format-List"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Format-Table"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Get-Acl"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Get-Alias"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Get-AuthenticodeSignature"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Get-ChildItem"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Get-CimInstance"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Get-Command"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Get-ComputerInfo"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Get-Content"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Get-Culture"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Get-Date"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Get-ExecutionPolicy"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Get-FileHash"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Get-Help"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Get-Host"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Get-Item"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Get-ItemProperty"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Get-Location"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Get-Member"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Get-Module"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Get-NetTCPConnection"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Get-Package"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Get-Process"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Get-PSDrive"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Get-Service"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Get-UICulture"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Get-Variable"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Group-Object"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Import-Clixml"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Import-Csv"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Import-PowerShellDataFile"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Join-Path"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Measure-Object"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["New-Item"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Out-String"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Pop-Location"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Push-Location"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Resolve-DnsName"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Resolve-Path"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Select-Object"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Select-String"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Set-Location"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Sort-Object"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Split-Path"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Test-Connection"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Test-NetConnection"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Test-Path"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Where-Object"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Write-Error"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Write-Host"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Write-Output"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Write-Verbose"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["Write-Warning"],
+    decision = "allow",
+)
+
+# Other command-line tools
+
+## FORBIDDEN
+
+# No rules in this category.
+
+## PROMPT
+
+# No rules in this category.
+
+## ALLOW
+
+prefix_rule(
+    pattern = ["awk"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["grep"],
+    decision = "allow",
+)
+
+prefix_rule(
+    pattern = ["rg"],
+    decision = "allow",
+)
