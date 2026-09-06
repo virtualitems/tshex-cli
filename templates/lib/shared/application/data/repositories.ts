@@ -1,4 +1,4 @@
-import { type DataManager } from './managers.js'
+import { type DataManager } from './managers.ts'
 
 type Generic = Record<string, unknown>
 

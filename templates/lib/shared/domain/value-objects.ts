@@ -1,4 +1,4 @@
-import { ValueError } from './errors.js'
+import { ValueError } from './errors.ts'
 
 /**
  * @see https://emailregex.com/

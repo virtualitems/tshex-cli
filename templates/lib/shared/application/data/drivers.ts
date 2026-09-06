@@ -1,4 +1,4 @@
-import { DataManager } from './managers.js'
+import { DataManager } from './managers.ts'
 
 /**
  * @description Declares the connection contract with a data source driver.
