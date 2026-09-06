@@ -92,7 +92,7 @@ Each generated context starts with an example port file and three directories.
 
 | Path | Responsibility |
 | --- | --- |
-| `<context>/example-ports.ts` | Example module for context ports. All context root `.ts` files are expected to define context ports. |
+| `<context>/example.ts` | Example module for context ports. All context root `.ts` files are expected to define context ports. |
 | `<context>/domain/` | Domain capabilities and rules for the context. |
 | `<context>/application/` | Processes that use domain capabilities to fulfill system purposes. |
 | `<context>/adapters/` | Integrations that wrap third-party libraries or context ports. |

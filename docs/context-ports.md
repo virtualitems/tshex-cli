@@ -14,14 +14,14 @@ make the port explicit. The main concern is the port as a real executable
 surface that another actor can call or observe.
 
 > **Hint**
-> The generated `example-ports.ts` file is only a placeholder. Replace it when
+> The generated `example.ts` file is only a placeholder. Replace it when
 > the first real interaction of the context becomes clear.
 
 #### Root Port File
 
 The generated context starts with a single root file for ports.
 
-```ts title="enrollment/example-ports.ts"
+```ts title="enrollment/example.ts"
 export class Example {
     public doSomething(): void {
         // ...
@@ -258,7 +258,6 @@ flowchart TD
     courses --> coursesApp["application/"]
 
     enrollment["enrollment/"] --> enrollmentPort["enrollment.ts"]
-    enrollment --> examplePort["example-ports.ts"]
     enrollment --> enrollmentDomain["domain/"]
     enrollment --> enrollmentApp["application/"]
 ```

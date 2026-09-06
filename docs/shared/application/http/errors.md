@@ -73,7 +73,7 @@ error.message // 'Unknown Error'
 
 #### Usage In A Handler
 
-```ts title="users/adapters/get-user-handler.ts"
+```ts title="enrollment/adapters/enroll-handler.ts"
 import { HttpError } from '../../shared/application/http/errors.js'
 
 function assertFound<T>(value: T | null): T {

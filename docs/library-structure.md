@@ -89,13 +89,13 @@ Every generated context starts with the same internal structure.
 
 ```mermaid
 flowchart TD
-    enrollment["enrollment/"] --> ports["example-ports.ts"]
+    enrollment["enrollment/"] --> ports["example.ts"]
     enrollment --> adapters["adapters/"]
     enrollment --> application["application/"]
     enrollment --> domain["domain/"]
 ```
 
-`example-ports.ts` is an example module in the root communication surface of
+`example.ts` is an example module in the root communication surface of
 the context.
 `domain/` contains capabilities and rules. `application/` contains processes.
 `adapters/` contains integrations that wrap third-party libraries or context
@@ -147,7 +147,7 @@ from the outside. A port is the concrete object the context exposes. Adapters
 or other callers can use that port object and route work into an application
 process.
 
-The generated template starts with `example-ports.ts`. As the context grows,
+The generated template starts with `example.ts`. As the context grows,
 additional context root `.ts` modules can define more ports. The detailed
 guidance for that layout lives in `context-ports.md`.
 
@@ -261,9 +261,13 @@ container.register({
     }
 })
 
-const roster = new Roster(container.resolve<StudentsService>('StudentsService'), logger)
-const catalog = new Catalog(container.resolve<CoursesService>('CoursesService'), logger)
-const enrollment = new Enrollment(container.resolve<InscriptionsService>('InscriptionsService'), logger)
+const studentsService = container.resolve<StudentsService>('StudentsService')
+const coursesService = container.resolve<CoursesService>('CoursesService')
+const inscriptionsService = container.resolve<InscriptionsService>('InscriptionsService')
+
+const roster = new Roster(studentsService, logger)
+const catalog = new Catalog(coursesService, logger)
+const enrollment = new Enrollment(inscriptionsService, logger)
 
 roster.create({ name: 'Alice', email: 'alice@example.com' })
 roster.create({ name: 'Bob', email: 'bob@example.com' })

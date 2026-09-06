@@ -40,63 +40,46 @@ export abstract class ValueObject<T = unknown> {
 The base class provides serialization helpers and a generic validation check.
 Concrete value objects must define `value` and `equals()`.
 
-#### Custom Value Object
-
-The following example shows how to create a new value object by extending the
-base class. The pattern applies the same responsibility split regardless of the
-domain concept involved.
-
-```ts title="shared/domain/value-objects.ts"
-import { ValueObject } from '../../shared/domain/value-objects.ts'
-import { ValueError } from '../../shared/domain/errors.ts'
-
-export class Percentage extends ValueObject<number> {
-    public override readonly value: number
-
-    protected constructor(value: number) {
-        super()
-        this.value = value
-    }
-
-    public override equals(
-        other: Percentage | null | undefined,
-    ): boolean {
-        if (other === null || other === undefined) {
-            return false
-        }
-
-        return this.value === other.value
-    }
-
-    public static from(value: number): Percentage {
-        if (value < 0 || value > 100) {
-            throw new ValueError(String(value), Percentage.name)
-        }
-
-        return new Percentage(value)
-    }
-}
-```
-
-`Percentage` owns the validation rule of the concept and the equality rule of
-the value. This is the normal responsibility split for a value object.
-
 #### NullableBoolean
 
 `NullableBoolean` is responsible for representing a tri-state Boolean.
 
 ```ts title="shared/domain/value-objects.ts"
-import { NullableBoolean } from '../../shared/domain/value-objects.ts'
+export class NullableBoolean extends ValueObject<boolean | null> {
+    [property: string]: unknown
 
+    public override readonly value: boolean | null
+
+    protected constructor(value: boolean | null) {
+        super()
+        this.value = value
+    }
+
+    public override equals(other: NullableBoolean | null | undefined): boolean {
+        if (other === null || other === undefined) return false
+        return this.value === other.value
+    }
+
+    public isIndeterminate(): boolean {
+        return this.value === null
+    }
+
+    public static from(value: boolean | null): NullableBoolean {
+        return new this(value)
+    }
+}
+```
+
+`from(value)` accepts `true`, `false`, or `null`. `equals()` compares the wrapped
+value. `isIndeterminate()` returns `true` when the state is `null`.
+
+```ts
 const active = NullableBoolean.from(true)
 const unknown = NullableBoolean.from(null)
 
 active.equals(NullableBoolean.from(true))
 unknown.isIndeterminate()
 ```
-
-`from(value)` accepts `true`, `false`, or `null`. `equals()` compares the wrapped
-value. `isIndeterminate()` returns `true` when the state is `null`.
 
 #### Email
 

@@ -48,36 +48,44 @@ the email validation rule.
 
 #### Handling The Error
 
-Now consider a port that wants to translate a domain error into an
-application-level result when creating a student from raw input.
+In the following example the `Roster` port calls `Email.from()` when creating a
+student. Because `Email.from()` throws `ValueError` on invalid input, the error
+propagates to whoever called `Roster.create()`.
 
 ```ts title="students/students.ts"
-import { ValueError } from '../shared/domain/errors.ts'
-import { Email } from '../shared/domain/value-objects.ts'
+import { StudentsService } from './application/services.ts'
 import { Student } from './domain/students.ts'
+import { Email } from '../shared/domain/value-objects.ts'
+import { FileLogger } from '../shared/adapters/loggers.ts'
 
 export class Roster {
-    // ...
+    protected readonly service: StudentsService
+    protected readonly logger: FileLogger
+
+    public constructor(service: StudentsService, logger: FileLogger) {
+        this.service = service
+        this.logger = logger
+    }
 
     public create(data: { name: string, email: string }): boolean {
         const { name, email } = data
 
-        try {
-            return this.service.create(new Student(name, Email.from(email)))
-        } catch (error: unknown) {
-            if (error instanceof ValueError) {
-                this.logger.warn({ action: 'create', context: 'students', error: error.message })
-                return false
-            }
+        const isCreated = this.service.create(new Student(name, Email.from(email)))
 
-            throw error
+        if (isCreated === true) {
+            this.logger.info({ action: 'create', context: 'students', name, email })
+        } else {
+            this.logger.warn({ action: 'create', context: 'students', name, email })
         }
+
+        return isCreated
     }
 }
 ```
 
-This pattern keeps the domain rule strict while allowing the boundary layer to
-decide how that failure is exposed.
+`Email.from()` throws `ValueError` when the address is invalid. The error
+propagates out of `Roster.create()` to the caller. The caller can catch it with
+`instanceof ValueError` when it needs to handle the failure explicitly.
 
 > **Hint**
 > `Email.from()` in the generated value objects uses this same error type.

@@ -47,42 +47,26 @@ export class CreateStudentInput implements Validatable {
 `Email` instance yet. This is useful when the process wants to reject invalid
 input before attempting a full domain conversion.
 
-#### Integration With A Service
+#### Integration With A Port
 
-Now that the validation object exists, a service can decide what to do when the
-input does not satisfy the contract.
+Now that the validation object exists, a port can check it before constructing
+domain objects or calling the service.
 
-```ts title="students/application/services.ts"
-import { Service } from '../../shared/application/services.ts'
-import { Validatable } from '../../shared/application/validations.ts'
+```ts
+import { CreateStudentInput } from './application/create-student-input.ts'
 
-type StudentInput = Validatable & {
-    readonly name: string
-    readonly email: string
+const input = new CreateStudentInput(data.name, data.email)
+
+if (input.isValid() === false) {
+    return false
 }
 
-type RegistrationResult =
-    | { ok: true }
-    | { ok: false; errors: string[] }
-
-export class StudentsService extends Service {
-    public register(input: StudentInput): RegistrationResult {
-        if (input.isValid() === false) {
-            return {
-                ok: false,
-                errors: ['The student registration input is invalid.'],
-            }
-        }
-
-        return {
-            ok: true,
-        }
-    }
-}
+// Input is valid — proceed with domain construction
+const isCreated = this.service.create(new Student(data.name, Email.from(data.email)))
 ```
 
-The service decides the process outcome, while the validation object owns the
-question of whether the input is acceptable.
+The port decides whether to continue the process, while the validation object
+owns the question of whether the input is acceptable.
 
 > **Hint**
 > `Validatable` does not replace domain rules. Use it for application-level
