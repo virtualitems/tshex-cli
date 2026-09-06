@@ -1,6 +1,8 @@
-// Ports are exports from the context root level
-// you can delete this file and create your own ports file in the context root level
+// Exports from the context root level
+// you can delete this file and create your own file in the context root level
 
-export function example(): void {
-    // ...
-}
+export class Example {
+    public doSomething(): void {
+        // ...
+    }
+} //:: Example

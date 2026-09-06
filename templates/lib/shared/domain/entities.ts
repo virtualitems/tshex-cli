@@ -7,11 +7,11 @@ export abstract class Entity {
 
     public abstract equals(other: Entity): boolean
 
-    public toJSON(): this {
+    public toJSON(): Record<string, unknown> {
         return this
     }
 
     public toString(): string {
         return this.constructor.name
     }
-} //:: class
+} //:: Entity
