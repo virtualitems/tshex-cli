@@ -15,25 +15,25 @@ rules.
 
 ```ts title="shared/domain/value-objects.ts"
 export abstract class ValueObject<T = unknown> {
-	public abstract readonly value: T
+    public abstract readonly value: T
 
-	public toString(): string {
-		return String(this.value)
-	}
+    public toString(): string {
+        return String(this.value)
+    }
 
-	public toJSON(): T {
-		return this.value
-	}
+    public toJSON(): T {
+        return this.value
+    }
 
-	public abstract equals(other: ValueObject<T> | null | undefined): boolean
+    public abstract equals(other: ValueObject<T> | null | undefined): boolean
 
-	public static isValid(value: unknown): boolean {
-		return (
-			value !== null &&
-			value !== undefined &&
-			Object.is(value, NaN) === false
-		)
-	}
+    public static isValid(value: unknown): boolean {
+        return (
+            value !== null &&
+            value !== undefined &&
+            Object.is(value, NaN) === false
+        )
+    }
 }
 ```
 
@@ -42,37 +42,39 @@ Concrete value objects must define `value` and `equals()`.
 
 #### Custom Value Object
 
-In the following example we create a local value object for percentages.
+The following example shows how to create a new value object by extending the
+base class. The pattern applies the same responsibility split regardless of the
+domain concept involved.
 
-```ts title="users/domain/percentage.ts"
-import { ValueObject } from '../../shared/domain/value-objects.js'
-import { ValueError } from '../../shared/domain/errors.js'
+```ts title="shared/domain/value-objects.ts"
+import { ValueObject } from '../../shared/domain/value-objects.ts'
+import { ValueError } from '../../shared/domain/errors.ts'
 
 export class Percentage extends ValueObject<number> {
-	public override readonly value: number
+    public override readonly value: number
 
-	protected constructor(value: number) {
-		super()
-		this.value = value
-	}
+    protected constructor(value: number) {
+        super()
+        this.value = value
+    }
 
-	public override equals(
-		other: Percentage | null | undefined,
-	): boolean {
-		if (other === null || other === undefined) {
-			return false
-		}
+    public override equals(
+        other: Percentage | null | undefined,
+    ): boolean {
+        if (other === null || other === undefined) {
+            return false
+        }
 
-		return this.value === other.value
-	}
+        return this.value === other.value
+    }
 
-	public static from(value: number): Percentage {
-		if (value < 0 || value > 100) {
-			throw new ValueError(String(value), Percentage.name)
-		}
+    public static from(value: number): Percentage {
+        if (value < 0 || value > 100) {
+            throw new ValueError(String(value), Percentage.name)
+        }
 
-		return new Percentage(value)
-	}
+        return new Percentage(value)
+    }
 }
 ```
 
@@ -84,7 +86,7 @@ the value. This is the normal responsibility split for a value object.
 `NullableBoolean` is responsible for representing a tri-state Boolean.
 
 ```ts title="shared/domain/value-objects.ts"
-import { NullableBoolean } from '../../shared/domain/value-objects.js'
+import { NullableBoolean } from '../../shared/domain/value-objects.ts'
 
 const active = NullableBoolean.from(true)
 const unknown = NullableBoolean.from(null)
@@ -101,13 +103,13 @@ value. `isIndeterminate()` returns `true` when the state is `null`.
 `Email` is responsible for validating and describing an email address.
 
 ```ts title="shared/domain/value-objects.ts"
-import { Email } from '../../shared/domain/value-objects.js'
+import { Email } from '../../shared/domain/value-objects.ts'
 
-const email = Email.from('ada@example.com')
+const email = Email.from('alice@example.com')
 
-email.username
-email.domain
-email.tld
+email.username  // 'alice'
+email.domain    // 'example.com'
+email.tld       // 'com'
 ```
 
 `Email.from()` validates the string and throws `ValueError` when the input does
@@ -116,26 +118,49 @@ the address without repeating parsing logic in the rest of the domain.
 
 #### Full Example
 
-The following example combines both generated value objects in one small domain
-shape.
+The following example shows `Email` used as the identity of a `Student` entity.
 
-```ts title="users/domain/user-profile.ts"
-import { Email, NullableBoolean } from '../../shared/domain/value-objects.js'
+```ts title="students/domain/students.ts"
+import { Entity } from '../../shared/domain/entities.ts'
+import { Email } from '../../shared/domain/value-objects.ts'
 
-type UserProfile = {
-	email: Email
-	active: NullableBoolean
+export class Student extends Entity {
+    [property: string]: unknown
+
+    public name: string
+    public email: Email
+
+    public constructor(name: string, email: Email) {
+        super()
+
+        this.name = name
+        this.email = email
+    }
+
+    public override equals(other: Entity): boolean {
+        if ((other instanceof Student) === false) return false
+
+        const student = other as Student
+
+        return this.email.equals(student.email)
+    }
+
+    public override toJSON() {
+        return {
+            name: this.name,
+            email: this.email.value
+        }
+    }
 }
 
-const profile: UserProfile = {
-	email: Email.from('ada@example.com'),
-	active: NullableBoolean.from(null),
-}
+const alice = new Student('Alice', Email.from('alice@example.com'))
+const bob = new Student('Bob', Email.from('bob@example.com'))
+
+alice.equals(bob)  // false — different emails
 ```
 
-This example keeps the domain data explicit. The email carries its own
-validation and derived fields. The active flag carries its own tri-state
-semantics.
+`Student` delegates identity to `Email`, so the comparison rule lives in the
+value object and `Student.equals()` stays focused on its own concept.
 
 > **Warning**
 > Use a value object only when equality depends on the value itself. If the

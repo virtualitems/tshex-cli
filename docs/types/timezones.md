@@ -63,12 +63,6 @@ const options: Intl.DateTimeFormatOptions & { timeZone: TimeZone } = {
 The intersection keeps every other formatting option from
 `Intl.DateTimeFormatOptions` while narrowing `timeZone` to a real identifier.
 
-#### Where It Is Used
-
-`shared/application/loggers.ts` uses this same intersection for
-`Logger.datetimeFormatOptions`, defaulting `timeZone` to `'UTC'`. See
-`shared/application/loggers.md`.
-
 > **Hint**
 > `TimeZone` is a compile-time contract only. It does not validate that the
 > runtime's ICU data actually supports every listed zone, and it does not

@@ -5,8 +5,8 @@ information.
 They are used to keep services independent from a concrete logging library or
 transport.
 
-The generated template provides shared level constants and the abstract
-`Logger` contract.
+The generated template provides shared level constants, the `Loggable`
+interface, and the abstract `Logger` contract.
 
 #### Log Levels
 
@@ -14,23 +14,39 @@ The following constants describe the generated severity scale.
 
 | Constant | Value |
 | --- | --- |
-| `DEBUG` | `10` |
-| `INFO` | `20` |
-| `WARNING` | `30` |
-| `ERROR` | `40` |
-| `CRITICAL` | `50` |
+| `LOG` | `10` |
+| `DEBUG` | `20` |
+| `INFO` | `30` |
+| `WARN` | `40` |
+| `ERROR` | `50` |
 
 These values give the project a shared vocabulary for severity without forcing
 any adapter to use a particular logger implementation.
 
+#### Loggable
+
+`Loggable` declares the named log-level methods equivalent to the browser
+console API.
+
+```ts title="shared/application/loggers.ts"
+export interface Loggable {
+    log(data: unknown): void
+    debug(data: unknown): void
+    info(data: unknown): void
+    warn(data: unknown): void
+    error(data: unknown): void
+}
+```
+
+Implement `Loggable` alongside `Logger` when the adapter wants to expose named
+convenience methods to callers.
+
 #### Logger
 
 `Logger` is responsible for receiving log data from the application layer.
+Subclasses implement `write()` to route entries to a specific output target.
 
 ```ts title="shared/application/loggers.ts"
-import { type TimeZone } from '../../types/timezones.js'
-import { type Locale } from '../../types/locales.js'
-
 export abstract class Logger {
     [property: string]: unknown
 
@@ -38,106 +54,102 @@ export abstract class Logger {
 
     public level: number = 0
 
-    public datetimeLocales: Locale[] = ['en-GB']
-
-    public datetimeFormatOptions: Intl.DateTimeFormatOptions & { timeZone: TimeZone } = {
-        timeZone: 'UTC',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        fractionalSecondDigits: 3,
-        hourCycle: 'h23'
-    }
-
-    public abstract debug(data: unknown): void
-
-    public abstract info(data: unknown): void
-
-    public abstract warning(data: unknown): void
-
-    public abstract error(data: unknown): void
-
-    public abstract critical(data: unknown): void
-
-    protected getCurrentDatetime(): string {
-        return new Date().toLocaleString(this.datetimeLocales, this.datetimeFormatOptions)
-    }
-} //:: class
+    public abstract write(level: number, data: unknown): void
+}
 ```
 
-The contract is intentionally small. It defines the actions the application can
-request, while the adapter decides how those actions are persisted or displayed.
-
 `name` and `level` identify the logger instance and its minimum severity, so an
-adapter can decide which logs to emit or route. `datetimeLocales` and
-`datetimeFormatOptions` control how `getCurrentDatetime()` formats the current
-moment, using the `Locale` type from `types/locales.d.ts` (see
-`types/locales.md`) and the `TimeZone` type from `types/timezones.d.ts` (see
-`types/timezones.md`). Adapters can use `getCurrentDatetime()` to timestamp
-log entries consistently, regardless of the runtime environment's own locale
-or timezone.
+adapter can decide which logs to emit or route.
 
 #### First Adapter
 
-In the following example we implement a console-based logger.
+In the following example we implement a file-based logger that writes one
+formatted line per entry and respects the configured level threshold.
 
-```ts title="users/adapters/console-logger.ts"
-import { Logger } from '../../shared/application/loggers.js'
+```ts title="shared/adapters/loggers.ts"
+import { Logger, Loggable, LOG, DEBUG, INFO, WARN, ERROR } from '../application/loggers.ts'
 
-export class ConsoleLogger extends Logger {
-	public debug(data: unknown): void {
-		console.debug(this.getCurrentDatetime(), this.name, data)
-	}
+export class FileLogger extends Logger implements Loggable {
+    [property: string]: unknown
 
-	public info(data: unknown): void {
-		console.info(this.getCurrentDatetime(), this.name, data)
-	}
+    protected static readonly levelLabels: Record<number, string> = {
+        [LOG]: 'LOG',
+        [DEBUG]: 'DEBUG',
+        [INFO]: 'INFO',
+        [WARN]: 'WARN',
+        [ERROR]: 'ERROR'
+    }
 
-	public warning(data: unknown): void {
-		console.warn(this.getCurrentDatetime(), this.name, data)
-	}
+    protected readonly filePath: string
 
-	public error(data: unknown): void {
-		console.error(this.getCurrentDatetime(), this.name, data)
-	}
+    public constructor(filePath: string) {
+        super()
 
-	public critical(data: unknown): void {
-		console.error(this.getCurrentDatetime(), this.name, data)
-	}
+        this.filePath = filePath
+    }
+
+    public log(data: unknown): void { this.write(LOG, data) }
+    public debug(data: unknown): void { this.write(DEBUG, data) }
+    public info(data: unknown): void { this.write(INFO, data) }
+    public warn(data: unknown): void { this.write(WARN, data) }
+    public error(data: unknown): void { this.write(ERROR, data) }
+
+    public override write(level: number, data: unknown): void {
+        if (level < this.level) return
+
+        const timestamp = new Date().toISOString()
+        const name = this.name
+        const label = FileLogger.levelLabels[level] ?? String(level)
+        const payload = typeof data === 'object' ? JSON.stringify(data) : String(data)
+        const entry = `${timestamp} [${label}] (${name}) ${payload}\n`
+
+        Deno.writeTextFileSync(this.filePath, entry, { append: true })
+    }
 }
 ```
 
 This adapter satisfies the generated contract without changing the application
-layer. It reuses `getCurrentDatetime()` to prefix every entry with a
-consistently formatted timestamp.
+layer. It filters entries below the configured `level` threshold and formats
+each line with an ISO timestamp, level label, and logger name.
 
 #### Service Integration
 
-Now that the logger exists, an application service can depend on the contract.
+Now that the logger exists, a context port can depend on it.
 
-```ts title="users/application/register-user.ts"
-import { Service } from '../../shared/application/services.js'
-import { Logger } from '../../shared/application/loggers.js'
+```ts title="students/students.ts"
+import { StudentsService } from './application/services.ts'
+import { Student } from './domain/students.ts'
+import { Email } from '../shared/domain/value-objects.ts'
+import { FileLogger } from '../shared/adapters/loggers.ts'
 
-export class RegisterUser extends Service {
-	public constructor(private readonly logger: Logger) {
-		super()
-	}
+export class Roster {
+    protected readonly service: StudentsService
+    protected readonly logger: FileLogger
 
-	public async execute(email: string): Promise<void> {
-		this.logger.info({
-			message: 'Registering user',
-			email,
-		})
-	}
+    public constructor(service: StudentsService, logger: FileLogger) {
+        this.service = service
+        this.logger = logger
+    }
+
+    public create(data: { name: string, email: string }): boolean {
+        const { name, email } = data
+
+        const isCreated = this.service.create(new Student(name, Email.from(email)))
+
+        if (isCreated === true) {
+            this.logger.info({ action: 'create', context: 'students', name, email })
+        } else {
+            this.logger.warn({ action: 'create', context: 'students', name, email })
+        }
+
+        return isCreated
+    }
 }
 ```
 
-The service does not know whether the logger writes to the console, a file, or
-an external platform. It only depends on the application-level contract.
+The port does not know whether the logger writes to a file, the console, or
+an external platform. It only depends on the adapter reference received through
+the constructor.
 
 > **Hint**
 > Pass structured objects when the project needs machine-readable logs. The
@@ -147,7 +159,7 @@ an external platform. It only depends on the application-level contract.
 
 ```mermaid
 flowchart LR
-    service[Service] --> contract["Logger contract"]
+    port[Port] --> contract["Logger contract"]
     contract --> adapter[Adapter]
     adapter --> backend["Logging backend"]
 ```

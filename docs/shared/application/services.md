@@ -22,49 +22,27 @@ without imposing a method name, result shape, or framework-specific lifecycle.
 
 #### Usage
 
-In the following example we build services for a course enrollment context.
-Each service receives its dependencies through the constructor and exposes
-operations that the context ports can call.
+In the following example we build services for a course enrollment system.
+Each context provides its own service that receives its dependencies through
+the constructor and exposes operations that the context ports can call.
 
-```ts title="enrollment/application/services.ts"
-import { Service } from '../shared/application/services.ts'
-import { InMemoryDatabaseManager } from './managers.ts'
-import { CoursesRepository, StudentsRepository, InscriptionsRepository } from './repositories.ts'
-import type { Course } from '../domain/courses.ts'
+```ts title="students/application/services.ts"
+import { Service } from '../../shared/application/services.ts'
+import { InMemoryDatabaseManager } from '../../shared/adapters/managers.ts'
+import { StudentsRepository } from './repositories.ts'
 import type { Student } from '../domain/students.ts'
-import type { Inscription } from '../domain/inscriptions.ts'
-
-export class CoursesService extends Service {
-    [property: string]: unknown
-
-    constructor(
-        private readonly manager: InMemoryDatabaseManager,
-        private readonly repository: CoursesRepository
-    ) {
-        super()
-    }
-
-    public all() {
-        return this.manager.all()
-    }
-
-    public create(course: Course) {
-        return this.repository.create(course)
-    }
-
-    public delete(course: Course) {
-        return this.repository.delete(course)
-    }
-}
 
 export class StudentsService extends Service {
     [property: string]: unknown
 
-    constructor(
-        private readonly manager: InMemoryDatabaseManager,
-        private readonly repository: StudentsRepository
-    ) {
+    protected readonly manager: InMemoryDatabaseManager
+    protected readonly repository: StudentsRepository
+
+    public constructor(manager: InMemoryDatabaseManager, repository: StudentsRepository) {
         super()
+
+        this.manager = manager
+        this.repository = repository
     }
 
     public all() {
@@ -79,15 +57,58 @@ export class StudentsService extends Service {
         return this.repository.delete(student)
     }
 }
+```
+
+```ts title="courses/application/services.ts"
+import { Service } from '../../shared/application/services.ts'
+import { InMemoryDatabaseManager } from '../../shared/adapters/managers.ts'
+import { CoursesRepository } from './repositories.ts'
+import type { Course } from '../domain/courses.ts'
+
+export class CoursesService extends Service {
+    [property: string]: unknown
+
+    protected readonly manager: InMemoryDatabaseManager
+    protected readonly repository: CoursesRepository
+
+    public constructor(manager: InMemoryDatabaseManager, repository: CoursesRepository) {
+        super()
+
+        this.manager = manager
+        this.repository = repository
+    }
+
+    public all() {
+        return this.manager.all()
+    }
+
+    public create(course: Course) {
+        return this.repository.create(course)
+    }
+
+    public delete(course: Course) {
+        return this.repository.delete(course)
+    }
+}
+```
+
+```ts title="enrollment/application/services.ts"
+import { Service } from '../../shared/application/services.ts'
+import { InMemoryDatabaseManager } from '../../shared/adapters/managers.ts'
+import { InscriptionsRepository } from './repositories.ts'
+import type { Inscription } from '../domain/inscriptions.ts'
 
 export class InscriptionsService extends Service {
     [property: string]: unknown
 
-    constructor(
-        private readonly manager: InMemoryDatabaseManager,
-        private readonly repository: InscriptionsRepository
-    ) {
+    protected readonly manager: InMemoryDatabaseManager
+    protected readonly repository: InscriptionsRepository
+
+    public constructor(manager: InMemoryDatabaseManager, repository: InscriptionsRepository) {
         super()
+
+        this.manager = manager
+        this.repository = repository
     }
 
     public all() {

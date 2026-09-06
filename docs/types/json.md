@@ -33,18 +33,18 @@ consumer must be ready to handle.
 
 | Shape | Type | Example |
 | --- | --- | --- |
-| Primitive | `JsonPrimitive` | `'active'`, `42`, `true`, `null` |
-| Object | `JsonObject` | `{ id: '1', active: true }` |
-| Array | `JsonArray` | `[1, 2, 3]`, `[{ id: '1' }]` |
-| Nested composite | `JsonValue` | `{ tags: ['a', 'b'], meta: { retries: 2 } }` |
+| Primitive | `JsonPrimitive` | `'alice@example.com'`, `40`, `true`, `null` |
+| Object | `JsonObject` | `{ name: 'Alice', email: 'alice@example.com' }` |
+| Array | `JsonArray` | `[1, 2, 3]`, `[{ name: 'Alice' }]` |
+| Nested composite | `JsonValue` | `{ student: { name: 'Alice' }, course: { name: 'TypeScript' } }` |
 
 ```ts
-import { type JsonValue } from './types/json.js'
+import { type JsonValue } from './types/json.ts'
 
-const primitive: JsonValue = 'ada@example.com'
-const object: JsonValue = { id: '1', active: true }
+const primitive: JsonValue = 'alice@example.com'
+const object: JsonValue = { name: 'Alice', email: 'alice@example.com' }
 const array: JsonValue = [1, 2, 3]
-const nested: JsonValue = { tags: ['a', 'b'], meta: { retries: 2 } }
+const nested: JsonValue = { student: { name: 'Alice' }, course: { name: 'TypeScript' } }
 ```
 
 All four are valid `JsonValue` values because the type is a recursive union;
@@ -53,7 +53,7 @@ there is no separate constructor or runtime check to opt into a shape.
 #### Basic Usage
 
 ```ts
-import { type JsonValue } from './types/json.js'
+import { type JsonValue } from './types/json.ts'
 
 function toLogPayload(value: JsonValue): string {
     return JSON.stringify(value)
@@ -70,11 +70,6 @@ Use `JsonObject`/`JsonValue` when a contract must guarantee its data is plain
 and serializable, such as request payloads, stored metadata, or wire formats.
 Prefer `types/objects.md`'s `Generic<T>` instead when the value type is not
 required to be JSON-safe.
-
-`shared/application/http/json-api.ts` and
-`shared/application/http/json-web-token.ts` build on these types to describe
-JSON:API documents and JOSE/JWT structures; see `shared/application/http/json-api.md`
-and `shared/application/http/json-web-token.md`.
 
 > **Hint**
 > These declarations only provide compile-time structure. They do not validate

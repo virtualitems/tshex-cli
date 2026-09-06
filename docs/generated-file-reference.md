@@ -54,8 +54,9 @@ cases and integrations.
 | --- | --- |
 | `shared/application/validations.ts` | Declares the `Validatable` contract. |
 | `shared/application/services.ts` | Declares the `Service` base class for use cases. |
-| `shared/application/loggers.ts` | Declares shared log levels and the `Logger` contract. |
+| `shared/application/loggers.ts` | Declares shared log levels, the `Loggable` interface, and the `Logger` contract. |
 | `shared/application/events.ts` | Declares `Event`, `EventHandler`, and `EventDispatcher`. |
+| `shared/application/providers.ts` | Declares the `Container` dependency injection class. |
 
 These files do not implement frameworks or transports. They define the stable
 contracts that adapters and services can share.
@@ -91,13 +92,16 @@ Each generated context starts with an example port file and three directories.
 
 | Path | Responsibility |
 | --- | --- |
-| `users/example-ports.ts` | Example module for context ports. All context root `.ts` files are expected to define context ports. |
-| `users/domain/` | Domain capabilities and rules for the context. |
-| `users/application/` | Processes that use domain capabilities to fulfill system purposes. |
-| `users/adapters/` | Integrations that wraps third-party libraries or context ports. |
+| `<context>/example-ports.ts` | Example module for context ports. All context root `.ts` files are expected to define context ports. |
+| `<context>/domain/` | Domain capabilities and rules for the context. |
+| `<context>/application/` | Processes that use domain capabilities to fulfill system purposes. |
+| `<context>/adapters/` | Integrations that wrap third-party libraries or context ports. |
 
-The `users/` path is an example context name. Your project can generate one or
-more contexts with the same internal layout.
+The `<context>/` path is a placeholder for the actual context name. Your
+project can generate one or more contexts with the same internal layout.
+
+In a course enrollment system the contexts might be `students/`, `courses/`,
+and `enrollment/`, each with this same structure.
 
 #### How To Use This Reference
 
@@ -105,10 +109,11 @@ Use the following sequence when deciding where new code belongs.
 
 1. Put reusable domain concepts in `shared/domain`.
 2. Put reusable application contracts in `shared/application`.
-3. Put context-specific rules in `<context>/domain`.
-4. Put use cases in `<context>/application`.
-5. Put transport and infrastructure integrations in `<context>/adapters`.
-6. Put concrete boundary ports in context root `.ts` files.
+3. Put shared adapter implementations in `shared/adapters`.
+4. Put context-specific rules in `<context>/domain`.
+5. Put use cases in `<context>/application`.
+6. Put transport and infrastructure integrations in `<context>/adapters`.
+7. Put concrete boundary ports in context root `.ts` files.
 
 This reference explains placement. The architectural rationale is described in
 `library-structure.md`.

@@ -65,12 +65,6 @@ const preferredLocales: Locale[] = ['fr-CA', 'fr', 'en']
 The runtime resolves the first supported locale from the list; `Locale[]`
 only guarantees that every candidate is a real CLDR identifier.
 
-#### Where It Is Used
-
-`shared/application/loggers.ts` uses `Locale[]` for `Logger.datetimeLocales`,
-the locale list passed to `Date.prototype.toLocaleString()` when formatting a
-log timestamp. See `shared/application/loggers.md`.
-
 > **Hint**
 > `Locale` is a compile-time contract only. It does not validate that the
 > runtime's ICU data actually supports every listed locale; `Intl` APIs fall

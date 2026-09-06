@@ -31,24 +31,31 @@ the plain representation returned when the entity is serialized.
 
 #### Usage
 
-In the following example we model the entities of a course enrollment context.
+In the following example we model the entities of a course enrollment system.
 
-```ts title="enrollment/domain/students.ts"
-import { Entity } from '../shared/domain/entities.ts'
-import { Email } from '../shared/domain/value-objects.ts'
+```ts title="students/domain/students.ts"
+import { Entity } from '../../shared/domain/entities.ts'
+import { Email } from '../../shared/domain/value-objects.ts'
 
 export class Student extends Entity {
     [property: string]: unknown
 
-    constructor(
-        public name: string,
-        public email: Email
-    ) {
+    public name: string
+    public email: Email
+
+    public constructor(name: string, email: Email) {
         super()
+
+        this.name = name
+        this.email = email
     }
 
-    public equals(other: Student): boolean {
-        return this.email.equals(other.email)
+    public override equals(other: Entity): boolean {
+        if ((other instanceof Student) === false) return false
+
+        const student = other as Student
+
+        return this.email.equals(student.email)
     }
 
     public override toJSON() {
@@ -60,59 +67,77 @@ export class Student extends Entity {
 }
 ```
 
-```ts title="enrollment/domain/courses.ts"
-import { Entity } from '../shared/domain/entities.ts'
+```ts title="courses/domain/courses.ts"
+import { Entity } from '../../shared/domain/entities.ts'
 
 export class Course extends Entity {
     [property: string]: unknown
 
-    constructor(
-        public name: string,
-        public description: string,
-        public duration_hours: number
-    ) {
+    public name: string
+    public description: string
+    public durationHours: number
+
+    public constructor(name: string, description: string, durationHours: number) {
         super()
+
+        this.name = name
+        this.description = description
+        this.durationHours = durationHours
     }
 
-    public equals(other: Course): boolean {
-        return this.name === other.name
+    public override equals(other: Entity): boolean {
+        if ((other instanceof Course) === false) return false
+
+        const course = other as Course
+
+        return this.name === course.name
     }
 
     public override toJSON() {
         return {
             name: this.name,
             description: this.description,
-            duration_hours: this.duration_hours
+            durationHours: this.durationHours
         }
     }
 }
 ```
 
 ```ts title="enrollment/domain/inscriptions.ts"
-import { Entity } from '../shared/domain/entities.ts'
-import { Course } from './courses.ts'
-import { Student } from './students.ts'
+import { Entity } from '../../shared/domain/entities.ts'
+import { Course } from '../../courses/domain/courses.ts'
+import { Student } from '../../students/domain/students.ts'
 
 export class Inscription extends Entity {
     [property: string]: unknown
 
-    constructor(
-        public readonly student: Student,
-        public readonly course: Course,
-        public readonly enrolled_at: Date
-    ) {
+    public readonly student: Student
+    public readonly course: Course
+    public readonly enrolledAt: Date
+
+    public constructor(student: Student, course: Course, enrolledAt: Date) {
         super()
+
+        this.student = student
+        this.course = course
+        this.enrolledAt = enrolledAt
     }
 
-    public equals(other: Inscription): boolean {
-        return this.student.equals(other.student) && this.course.equals(other.course)
+    public override equals(other: Entity): boolean {
+        if ((other instanceof Inscription) === false) return false
+
+        const inscription = other as Inscription
+        const hasSameStudent = this.student.equals(inscription.student)
+        const hasSameCourse = this.course.equals(inscription.course)
+
+        return hasSameStudent === true && hasSameCourse === true
     }
 
     public override toJSON() {
         return {
             student: this.student.toJSON(),
             course: this.course.toJSON(),
-            enrolled_at: this.enrolled_at
+            enrolledAt: this.enrolledAt
         }
     }
 }

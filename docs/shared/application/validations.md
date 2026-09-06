@@ -14,7 +14,7 @@ The generated template provides a single contract for this purpose:
 
 ```ts title="shared/application/validations.ts"
 export interface Validatable {
-	isValid(): boolean
+    isValid(): boolean
 }
 ```
 
@@ -24,26 +24,26 @@ composed from several objects.
 
 #### First Validation Object
 
-In the following example we validate a registration payload before the service
-turns it into domain values.
+In the following example we validate a student registration payload before the
+service turns it into domain values.
 
-```ts title="users/application/create-user-input.ts"
-import { Validatable } from '../../shared/application/validations.js'
-import { Email } from '../../shared/domain/value-objects.js'
+```ts title="students/application/create-student-input.ts"
+import { Validatable } from '../../shared/application/validations.ts'
+import { Email } from '../../shared/domain/value-objects.ts'
 
-export class CreateUserInput implements Validatable {
-	public constructor(
-		public readonly id: string,
-		public readonly email: string,
-	) {}
+export class CreateStudentInput implements Validatable {
+    public constructor(
+        public readonly name: string,
+        public readonly email: string,
+    ) {}
 
-	public isValid(): boolean {
-		return this.id.length > 0 && Email.isValid(this.email)
-	}
+    public isValid(): boolean {
+        return this.name.length > 0 && Email.isValid(this.email)
+    }
 }
 ```
 
-`CreateUserInput` performs application-level checks without constructing an
+`CreateStudentInput` performs application-level checks without constructing an
 `Email` instance yet. This is useful when the process wants to reject invalid
 input before attempting a full domain conversion.
 
@@ -52,32 +52,32 @@ input before attempting a full domain conversion.
 Now that the validation object exists, a service can decide what to do when the
 input does not satisfy the contract.
 
-```ts title="users/application/register-user.ts"
-import { Service } from '../../shared/application/services.js'
-import { Validatable } from '../../shared/application/validations.js'
+```ts title="students/application/services.ts"
+import { Service } from '../../shared/application/services.ts'
+import { Validatable } from '../../shared/application/validations.ts'
 
-type CreateUserInput = Validatable & {
-	readonly id: string
-	readonly email: string
+type StudentInput = Validatable & {
+    readonly name: string
+    readonly email: string
 }
 
 type RegistrationResult =
-	| { ok: true }
-	| { ok: false; errors: string[] }
+    | { ok: true }
+    | { ok: false; errors: string[] }
 
-export class RegisterUser extends Service {
-	public execute(input: CreateUserInput): RegistrationResult {
-		if (input.isValid() === false) {
-			return {
-				ok: false,
-				errors: ['The registration input is invalid.'],
-			}
-		}
+export class StudentsService extends Service {
+    public register(input: StudentInput): RegistrationResult {
+        if (input.isValid() === false) {
+            return {
+                ok: false,
+                errors: ['The student registration input is invalid.'],
+            }
+        }
 
-		return {
-			ok: true,
-		}
-	}
+        return {
+            ok: true,
+        }
+    }
 }
 ```
 

@@ -26,10 +26,13 @@ In the following example we model an enrollment aggregate that groups a
 student and a course to produce an inscription with the current date.
 
 ```ts title="enrollment/domain/inscriptions.ts"
-import { Aggregate } from '../shared/domain/aggregates.ts'
-import { Course } from './courses.ts'
-import { Student } from './students.ts'
-import { Inscription } from './inscriptions.ts'
+import { Entity } from '../../shared/domain/entities.ts'
+import { Aggregate } from '../../shared/domain/aggregates.ts'
+import { Course } from '../../courses/domain/courses.ts'
+import { Student } from '../../students/domain/students.ts'
+
+// Inscription entity is defined in the same file (see entities.md)
+export class Inscription extends Entity { /* ... */ }
 
 export class InscriptionAggregate extends Aggregate {
     [property: string]: unknown

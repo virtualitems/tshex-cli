@@ -72,47 +72,78 @@ Register all tokens at once by passing a record to `register`. Each key is the
 unique string identifier for that service. Factories receive the resolver so
 they can declare their own dependencies.
 
-```ts title="enrollment/main.ts"
-import { Container } from '../shared/application/providers.ts'
-import { InMemoryDatabaseDriver } from './application/database.ts'
-import { InMemoryDatabaseManager } from './application/managers.ts'
-import { CoursesRepository, StudentsRepository } from './application/repositories.ts'
-import { CoursesService, StudentsService } from './application/services.ts'
+```ts title="main.ts"
+import { Container } from './shared/application/providers.ts'
+import { InMemoryDatabaseDriver } from './shared/adapters/database.ts'
+import { InMemoryDatabaseManager } from './shared/adapters/managers.ts'
+
+import { StudentsRepository } from './students/application/repositories.ts'
+import { StudentsService } from './students/application/services.ts'
+
+import { CoursesRepository } from './courses/application/repositories.ts'
+import { CoursesService } from './courses/application/services.ts'
+
+import { InscriptionsRepository } from './enrollment/application/repositories.ts'
+import { InscriptionsService } from './enrollment/application/services.ts'
 
 const container = new Container()
 
 container.register({
     DatabaseDriver: { factory: () => new InMemoryDatabaseDriver({}) },
-    DatabaseManager: {
-        factory: (r) => r.resolve<InMemoryDatabaseDriver>('DatabaseDriver').connect('default'),
-    },
-    CoursesRepository: {
-        factory: (r) => new CoursesRepository(r.resolve<InMemoryDatabaseManager>('DatabaseManager')),
+
+    // students context
+    StudentsManager: {
+        factory: (r) => r.resolve<InMemoryDatabaseDriver>('DatabaseDriver').connect('students')
     },
     StudentsRepository: {
-        factory: (r) => new StudentsRepository(r.resolve<InMemoryDatabaseManager>('DatabaseManager')),
-    },
-    CoursesService: {
-        factory: (r) => new CoursesService(
-            r.resolve<InMemoryDatabaseManager>('DatabaseManager'),
-            r.resolve<CoursesRepository>('CoursesRepository'),
-        ),
+        factory: (r) => new StudentsRepository(
+            r.resolve<InMemoryDatabaseManager>('StudentsManager')
+        )
     },
     StudentsService: {
         factory: (r) => new StudentsService(
-            r.resolve<InMemoryDatabaseManager>('DatabaseManager'),
-            r.resolve<StudentsRepository>('StudentsRepository'),
-        ),
+            r.resolve<InMemoryDatabaseManager>('StudentsManager'),
+            r.resolve<StudentsRepository>('StudentsRepository')
+        )
     },
-})
 
-const coursesService = container.resolve<CoursesService>('CoursesService')
-const studentsService = container.resolve<StudentsService>('StudentsService')
+    // courses context
+    CoursesManager: {
+        factory: (r) => r.resolve<InMemoryDatabaseDriver>('DatabaseDriver').connect('courses')
+    },
+    CoursesRepository: {
+        factory: (r) => new CoursesRepository(
+            r.resolve<InMemoryDatabaseManager>('CoursesManager')
+        )
+    },
+    CoursesService: {
+        factory: (r) => new CoursesService(
+            r.resolve<InMemoryDatabaseManager>('CoursesManager'),
+            r.resolve<CoursesRepository>('CoursesRepository')
+        )
+    },
+
+    // enrollment context
+    InscriptionsManager: {
+        factory: (r) => r.resolve<InMemoryDatabaseDriver>('DatabaseDriver').connect('inscriptions')
+    },
+    InscriptionsRepository: {
+        factory: (r) => new InscriptionsRepository(
+            r.resolve<InMemoryDatabaseManager>('InscriptionsManager')
+        )
+    },
+    InscriptionsService: {
+        factory: (r) => new InscriptionsService(
+            r.resolve<InMemoryDatabaseManager>('InscriptionsManager'),
+            r.resolve<InscriptionsRepository>('InscriptionsRepository')
+        )
+    }
+})
 ```
 
-Because `DatabaseManager` is a singleton, `CoursesRepository` and
-`StudentsRepository` share the same manager instance even though each factory
-calls `r.resolve('DatabaseManager')` independently.
+Each context connects to its own named collection through the shared
+`InMemoryDatabaseDriver`. Because each manager token resolves a distinct
+connection, the collections remain independent.
 
 > **Warning**
 > `unregister` removes the token and its cached instance but does not

@@ -18,12 +18,14 @@ flowchart TD
     root["Library root"] --> types["types/"]
     root --> main["main.ts"]
     root --> shared["shared/"]
+    root --> students["students/"]
+    root --> courses["courses/"]
     root --> enrollment["enrollment/"]
 ```
 
-`types/` groups the root-level type declarations. `main.ts` starts as a
-placeholder for main runtime exports. The rest of the structure lives under
-`shared/` and one or more context directories.
+`types/` groups the root-level type declarations. `main.ts` wires the
+dependency injection container and runs the application. The rest of the
+structure lives under `shared/` and one or more context directories.
 
 #### Types
 
@@ -53,11 +55,14 @@ contexts.
 flowchart TD
     shared["shared/"] --> application["application/"]
     shared --> domain["domain/"]
+    shared --> adapters["adapters/"]
 ```
 
 `shared/domain` contains modeling foundations such as value objects, entities,
 aggregates, and errors. `shared/application` contains contracts for services,
 validations, events, logging, HTTP boundaries, and data access.
+`shared/adapters` contains concrete adapter implementations shared across
+contexts, such as the in-memory database driver and manager.
 
 Move code to `shared` only when its meaning belongs to more than one context.
 Until then, keep it close to the context that owns the rule.
@@ -69,10 +74,9 @@ capability.
 
 ```mermaid
 flowchart TD
-    contexts["Contexts"] --> enrollment["enrollment/"]
-    contexts --> billing["billing/"]
-    contexts --> inventory["inventory/"]
-    contexts --> sales["sales/"]
+    contexts["Contexts"] --> students["students/"]
+    contexts --> courses["courses/"]
+    contexts --> enrollment["enrollment/"]
 ```
 
 Each context can evolve independently while still reusing the abstractions from
@@ -186,24 +190,95 @@ flowchart TD
 
 `main.ts` is the runtime entry point into the own system. Inside that system,
 application services use domain capabilities, while adapters can depend on
-ports and third-party libraries. The port branch stops at the boundary because
-what exists beyond that port depends on the system that implements it.
+ports and third-party libraries.
 
 ```ts title="main.ts"
-import { Example } from './enrollment/example-ports.ts'
-import { Student } from './enrollment/domain/students.ts'
-import { Course } from './enrollment/domain/courses.ts'
+import { Container } from './shared/application/providers.ts'
+import { InMemoryDatabaseDriver } from './shared/adapters/database.ts'
+import { InMemoryDatabaseManager } from './shared/adapters/managers.ts'
+import { FileLogger } from './shared/adapters/loggers.ts'
+
+import { StudentsRepository } from './students/application/repositories.ts'
+import { StudentsService } from './students/application/services.ts'
+import { Roster } from './students/students.ts'
+import { Student } from './students/domain/students.ts'
+
+import { CoursesRepository } from './courses/application/repositories.ts'
+import { CoursesService } from './courses/application/services.ts'
+import { Catalog } from './courses/courses.ts'
+import { Course } from './courses/domain/courses.ts'
+
+import { InscriptionsRepository } from './enrollment/application/repositories.ts'
+import { InscriptionsService } from './enrollment/application/services.ts'
+import { Enrollment } from './enrollment/enrollment.ts'
+
 import { Email } from './shared/domain/value-objects.ts'
 
-const example = new Example()
-const student = new Student('Ada Lovelace', Email.from('ada@example.com'))
-const course = new Course('Mathematics', 'Fundamentals of algebra and calculus', 40)
+const logger = new FileLogger('app.log')
 
-example.createStudent(student)
-example.createCourse(course)
-example.createInscription(student, course)
+const container = new Container()
 
-console.log(example.listInscriptions())
+container.register({
+    DatabaseDriver: { factory: () => new InMemoryDatabaseDriver({}) },
+
+    StudentsManager: {
+        factory: (r) => r.resolve<InMemoryDatabaseDriver>('DatabaseDriver').connect('students')
+    },
+    StudentsRepository: {
+        factory: (r) => new StudentsRepository(r.resolve<InMemoryDatabaseManager>('StudentsManager'))
+    },
+    StudentsService: {
+        factory: (r) => new StudentsService(
+            r.resolve<InMemoryDatabaseManager>('StudentsManager'),
+            r.resolve<StudentsRepository>('StudentsRepository')
+        )
+    },
+
+    CoursesManager: {
+        factory: (r) => r.resolve<InMemoryDatabaseDriver>('DatabaseDriver').connect('courses')
+    },
+    CoursesRepository: {
+        factory: (r) => new CoursesRepository(r.resolve<InMemoryDatabaseManager>('CoursesManager'))
+    },
+    CoursesService: {
+        factory: (r) => new CoursesService(
+            r.resolve<InMemoryDatabaseManager>('CoursesManager'),
+            r.resolve<CoursesRepository>('CoursesRepository')
+        )
+    },
+
+    InscriptionsManager: {
+        factory: (r) => r.resolve<InMemoryDatabaseDriver>('DatabaseDriver').connect('inscriptions')
+    },
+    InscriptionsRepository: {
+        factory: (r) => new InscriptionsRepository(r.resolve<InMemoryDatabaseManager>('InscriptionsManager'))
+    },
+    InscriptionsService: {
+        factory: (r) => new InscriptionsService(
+            r.resolve<InMemoryDatabaseManager>('InscriptionsManager'),
+            r.resolve<InscriptionsRepository>('InscriptionsRepository')
+        )
+    }
+})
+
+const roster = new Roster(container.resolve<StudentsService>('StudentsService'), logger)
+const catalog = new Catalog(container.resolve<CoursesService>('CoursesService'), logger)
+const enrollment = new Enrollment(container.resolve<InscriptionsService>('InscriptionsService'), logger)
+
+roster.create({ name: 'Alice', email: 'alice@example.com' })
+roster.create({ name: 'Bob', email: 'bob@example.com' })
+
+catalog.create({ name: 'TypeScript', description: 'Learn TypeScript', hours: 40 })
+catalog.create({ name: 'Clean Architecture', description: 'Hexagonal patterns', hours: 20 })
+
+const alice = new Student('Alice', Email.from('alice@example.com'))
+const typescript = new Course('TypeScript', 'Learn TypeScript', 40)
+
+enrollment.enroll(alice, typescript)
+
+console.log('students:', roster.all())
+console.log('courses:', catalog.all())
+console.log('inscriptions:', enrollment.all())
 ```
 
 #### Next Step

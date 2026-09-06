@@ -13,9 +13,9 @@ the expected domain concept.
 
 ```ts title="shared/domain/errors.ts"
 export class ValueError extends Error {
-	public constructor(received: string, expected: string) {
-		super(`Invalid value ${received} for ${expected}.`)
-	}
+    public constructor(received: string, expected: string) {
+        super(`Invalid value ${received} for ${expected}.`)
+    }
 }
 ```
 
@@ -24,73 +24,60 @@ message format is generated automatically.
 
 #### First Usage
 
-In the following example we define a local value object that rejects numbers
-outside the accepted range.
+In the following example the `Email` value object uses `ValueError` to reject
+strings that do not match the expected email format.
 
-```ts title="users/domain/percentage.ts"
-import { ValueError } from '../../shared/domain/errors.js'
+```ts title="shared/domain/value-objects.ts"
+import { ValueError } from './errors.ts'
 
-export class Percentage {
-	public constructor(public readonly value: number) {}
+export class Email extends ValueObject<string> {
+    // ...
 
-	public static from(value: number): Percentage {
-		if (value < 0 || value > 100) {
-			throw new ValueError(String(value), Percentage.name)
-		}
+    public static from(value: string): Email {
+        if (this.isValid(value) === false) {
+            throw new ValueError(value, this.name)
+        }
 
-		return new Percentage(value)
-	}
+        return new this(value)
+    }
 }
 ```
 
-`Percentage.from()` throws `ValueError` when the received value does not satisfy
-the rule of the concept.
+`Email.from()` throws `ValueError` when the received string does not satisfy
+the email validation rule.
 
 #### Handling The Error
 
-Now consider a process that wants to translate a domain error into an
-application-level result.
+Now consider a port that wants to translate a domain error into an
+application-level result when creating a student from raw input.
 
-```ts title="users/application/apply-discount.ts"
-import { ValueError } from '../../shared/domain/errors.js'
+```ts title="students/students.ts"
+import { ValueError } from '../shared/domain/errors.ts'
+import { Email } from '../shared/domain/value-objects.ts'
+import { Student } from './domain/students.ts'
 
-type DiscountResult =
-	| { ok: true; value: number }
-	| { ok: false; error: string }
+export class Roster {
+    // ...
 
-class Percentage {
-	public constructor(public readonly value: number) {}
+    public create(data: { name: string, email: string }): boolean {
+        const { name, email } = data
 
-	public static from(value: number): Percentage {
-		if (value < 0 || value > 100) {
-			throw new ValueError(String(value), Percentage.name)
-		}
+        try {
+            return this.service.create(new Student(name, Email.from(email)))
+        } catch (error: unknown) {
+            if (error instanceof ValueError) {
+                this.logger.warn({ action: 'create', context: 'students', error: error.message })
+                return false
+            }
 
-		return new Percentage(value)
-	}
-}
-
-export function applyDiscount(value: number): DiscountResult {
-	try {
-		return {
-			ok: true,
-			value: Percentage.from(value).value,
-		}
-	} catch (error: unknown) {
-		if (error instanceof ValueError) {
-			return {
-				ok: false,
-				error: error.message,
-			}
-		}
-
-		throw error
-	}
+            throw error
+        }
+    }
 }
 ```
 
-This pattern keeps the domain rule strict while allowing the application layer
-to decide how that failure is exposed.
+This pattern keeps the domain rule strict while allowing the boundary layer to
+decide how that failure is exposed.
 
 > **Hint**
 > `Email.from()` in the generated value objects uses this same error type.

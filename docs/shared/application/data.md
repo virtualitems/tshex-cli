@@ -37,52 +37,6 @@ Implement only the interfaces that the manager actually supports. Adding
 `Creatable` to a class makes the creation capability explicit and discoverable
 without adding it to the base class.
 
-```ts title="enrollment/application/managers.ts"
-import { DataManager } from '../shared/application/data/managers.ts'
-import type {
-    Listable,
-    Creatable,
-    Deletable
-} from '../shared/application/data/capabilities.ts'
-import type { Course } from '../domain/courses.ts'
-import type { Student } from '../domain/students.ts'
-import type { Inscription } from '../domain/inscriptions.ts'
-
-type Generic = Record<string, unknown>
-
-export type CourseData = ReturnType<Course['toJSON']>
-export type StudentData = ReturnType<Student['toJSON']>
-export type InscriptionData = ReturnType<Inscription['toJSON']>
-
-export class InMemoryDatabaseManager
-    extends DataManager
-    implements Listable, Creatable, Deletable
-{
-    [property: string]: unknown
-
-    constructor(private records: Generic[]) {
-        super()
-    }
-
-    public all(): Generic[] {
-        return this.records
-    }
-
-    public create(data: Generic): boolean {
-        this.records.push(data)
-        return true
-    }
-
-    public delete(selector: Partial<Generic>): boolean {
-        const before = this.records.length
-        this.records = this.records.filter((record) =>
-            Object.entries(selector).every(([key, value]) => record[key] !== value)
-        )
-        return this.records.length < before
-    }
-}
-```
-
 #### Data Manager
 
 `DataManager` is the base contract for any data source. `DatasetManager`
@@ -105,8 +59,54 @@ export abstract class DatasetManager<T = Record<string, unknown>> extends DataMa
 ```
 
 Extend `DataManager` to implement a concrete data source. The manager exposes
-raw data without domain transformation. The `InMemoryDatabaseManager` above
-extends `DataManager` and implements `Listable`, `Creatable`, and `Deletable`.
+raw data without domain transformation.
+
+The following adapter extends `DataManager` and implements `Listable`,
+`Creatable`, and `Deletable` against a plain array held in memory.
+
+```ts title="shared/adapters/managers.ts"
+import { DataManager } from '../application/data/managers.ts'
+import type { Listable, Creatable, Deletable } from '../application/data/capabilities.ts'
+
+type Generic = Record<string, unknown>
+
+export class InMemoryDatabaseManager
+    extends DataManager
+    implements Listable, Creatable, Deletable
+{
+    [property: string]: unknown
+
+    protected records: Generic[]
+
+    public constructor(records: Generic[]) {
+        super()
+
+        this.records = records
+    }
+
+    public all(): Generic[] {
+        return this.records
+    }
+
+    public create(data: Generic): boolean {
+        this.records.push(data)
+        return true
+    }
+
+    public delete(selector: Partial<Generic>): boolean {
+        const before = this.records.length
+
+        this.records = this.records.filter((record) =>
+            Object.entries(selector).every((entry) => {
+                const [key, value] = entry
+                return record[key] !== value
+            })
+        )
+
+        return this.records.length < before
+    }
+}
+```
 
 #### Driver Adapter
 
@@ -126,8 +126,11 @@ export abstract class DriverAdapter<M extends DataManager = DataManager> {
 Extend `DriverAdapter` to wrap a concrete data source. The driver connects to
 the source, returns an enabled manager, and disconnects when the work is done.
 
-```ts title="enrollment/application/database.ts"
-import { DriverAdapter } from '../shared/application/data/drivers.ts'
+The following adapter wraps the in-memory manager. It routes each connection
+to a named collection within a shared plain-object database.
+
+```ts title="shared/adapters/database.ts"
+import { DriverAdapter } from '../application/data/drivers.ts'
 import { InMemoryDatabaseManager } from './managers.ts'
 
 type Generic = Record<string, unknown>
@@ -137,13 +140,16 @@ export type Database = Record<string, Generic[]>
 export class InMemoryDatabaseDriver extends DriverAdapter<InMemoryDatabaseManager> {
     [property: string]: unknown
 
-    private manager: InMemoryDatabaseManager | null = null
+    protected manager: InMemoryDatabaseManager | null = null
+    protected readonly database: Database
 
-    constructor(private readonly database: Database) {
+    public constructor(database: Database) {
         super()
+
+        this.database = database
     }
 
-    public connect(collectionKey: string): InMemoryDatabaseManager {
+    public override connect(collectionKey: string): InMemoryDatabaseManager {
         if (this.database[collectionKey] === undefined) {
             this.database[collectionKey] = []
         }
@@ -152,7 +158,7 @@ export class InMemoryDatabaseDriver extends DriverAdapter<InMemoryDatabaseManage
         return this.manager
     }
 
-    public disconnect(): void {
+    public override disconnect(): void {
         this.manager = null
     }
 }
@@ -186,43 +192,26 @@ Data retrieval operations are not defined in the base class — add them
 explicitly in the concrete class using the capability interfaces from
 `capabilities.ts`.
 
-```ts title="enrollment/application/repositories.ts"
-import { Repository } from '../shared/application/data/repositories.ts'
-import { InMemoryDatabaseManager } from './managers.ts'
-import type { CourseData, StudentData, InscriptionData } from './managers.ts'
-import { Course } from '../domain/courses.ts'
+Each context provides its own repository. The following examples show how
+`StudentsRepository`, `CoursesRepository`, and `InscriptionsRepository` extend
+the base class with operations specific to their domain entities.
+
+```ts title="students/application/repositories.ts"
+import { Repository } from '../../shared/application/data/repositories.ts'
+import { InMemoryDatabaseManager } from '../../shared/adapters/managers.ts'
 import { Student } from '../domain/students.ts'
-import { Inscription } from '../domain/inscriptions.ts'
-import { Email } from '../shared/domain/value-objects.ts'
+import { Email } from '../../shared/domain/value-objects.ts'
 
-export class CoursesRepository extends Repository<CourseData, Course, InMemoryDatabaseManager> {
-    [property: string]: unknown
-
-    constructor(manager: InMemoryDatabaseManager) {
-        super(manager)
-    }
-
-    protected transform(data: CourseData): Course {
-        return new Course(data.name, data.description, data.duration_hours)
-    }
-
-    public create(course: Course): boolean {
-        return this.manager.create(course.toJSON())
-    }
-
-    public delete(course: Course): boolean {
-        return this.manager.delete(course.toJSON())
-    }
-}
+type StudentData = ReturnType<Student['toJSON']>
 
 export class StudentsRepository extends Repository<StudentData, Student, InMemoryDatabaseManager> {
     [property: string]: unknown
 
-    constructor(manager: InMemoryDatabaseManager) {
+    public constructor(manager: InMemoryDatabaseManager) {
         super(manager)
     }
 
-    protected transform(data: StudentData): Student {
+    protected override transform(data: StudentData): Student {
         return new Student(data.name, Email.from(data.email))
     }
 
@@ -234,16 +223,54 @@ export class StudentsRepository extends Repository<StudentData, Student, InMemor
         return this.manager.delete(student.toJSON())
     }
 }
+```
+
+```ts title="courses/application/repositories.ts"
+import { Repository } from '../../shared/application/data/repositories.ts'
+import { InMemoryDatabaseManager } from '../../shared/adapters/managers.ts'
+import { Course } from '../domain/courses.ts'
+
+type CourseData = ReturnType<Course['toJSON']>
+
+export class CoursesRepository extends Repository<CourseData, Course, InMemoryDatabaseManager> {
+    [property: string]: unknown
+
+    public constructor(manager: InMemoryDatabaseManager) {
+        super(manager)
+    }
+
+    protected override transform(data: CourseData): Course {
+        return new Course(data.name, data.description, data.durationHours)
+    }
+
+    public create(course: Course): boolean {
+        return this.manager.create(course.toJSON())
+    }
+
+    public delete(course: Course): boolean {
+        return this.manager.delete(course.toJSON())
+    }
+}
+```
+
+```ts title="enrollment/application/repositories.ts"
+import { Repository } from '../../shared/application/data/repositories.ts'
+import { InMemoryDatabaseManager } from '../../shared/adapters/managers.ts'
+import { Inscription } from '../domain/inscriptions.ts'
+import type { Student } from '../../students/domain/students.ts'
+import type { Course } from '../../courses/domain/courses.ts'
+
+type InscriptionData = ReturnType<Inscription['toJSON']>
 
 export class InscriptionsRepository extends Repository<InscriptionData, Inscription, InMemoryDatabaseManager> {
     [property: string]: unknown
 
-    constructor(manager: InMemoryDatabaseManager) {
+    public constructor(manager: InMemoryDatabaseManager) {
         super(manager)
     }
 
-    protected transform(data: InscriptionData, student: Student, course: Course): Inscription {
-        return new Inscription(student, course, data.enrolled_at)
+    protected override transform(data: InscriptionData, student: Student, course: Course): Inscription {
+        return new Inscription(student, course, data.enrolledAt)
     }
 
     public create(inscription: Inscription): boolean {
