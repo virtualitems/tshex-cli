@@ -111,7 +111,7 @@ core/
     |-- adapters/
     |-- application/
     |-- domain/
-    `-- example-ports.ts
+    `-- example.ts
 ```
 
 ### Choose the destination directory

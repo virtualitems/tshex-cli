@@ -102,15 +102,21 @@ the context.
 ports.
 
 Context root `.ts` files belong to the boundary surface of the context. Each
-one is expected to be a module that defines one or more context ports.
+one instantiates the adapters the context requires, injects those adapters as
+dependencies into the application services that consume them, and exposes
+classes, functions, or constants as integration points for other modules.
 
 #### Domain
 
-The domain layer contains the context's capabilities.
+The domain layer contains the context's capabilities. This layer models
+concepts that carry business meaning: value objects, entities, aggregates, and
+the rules that make them valid.
 
-This layer models concepts that carry business meaning: value objects, entities,
-aggregates, and the rules that make them valid. The domain should not depend on
-transport concerns or infrastructure details.
+Domain code is execution-context agnostic. The same domain module runs
+unchanged in a backend service, a browser application, or a mobile application
+because domain code references only the business concepts it models. This
+property makes domain code transferable across execution environments without
+modification.
 
 Typical domain responsibilities include validating an email address, identifying
 an entity, changing the state of an order, or grouping related entities into a
@@ -119,33 +125,39 @@ single unit.
 #### Application
 
 The application layer contains processes that use domain capabilities to
-fulfill a system purpose.
+fulfill a system purpose. Unlike the domain layer, the application layer carries
+the execution context of the system.
 
-A service in this layer coordinates collaborators. It can validate input,
-construct domain objects, read or write data through abstractions, publish an
-event, and log the result.
+A service in this layer may include logic specific to the execution environment
+where it runs. A backend service may handle HTTP request data or coordinate
+database transactions. A browser service may interact with browser storage or
+browser-specific APIs. A mobile application service may integrate with device
+capabilities. These differences reflect the application layer's responsibility:
+to orchestrate domain capabilities within a given execution context.
 
-The application layer is responsible for orchestration, not for owning the
-business rules themselves.
+A service in this layer coordinates collaborators: it validates input,
+constructs domain objects, reads or writes data through abstractions, publishes
+events, and logs results.
 
 #### Adapters
 
-The adapters layer contains the integrations that connect a context to other
-systems.
-
-An adapter wraps a third-party library or a context port so that the context
-can interact with a concrete transport or infrastructure path. An adapter can
-expose an HTTP handler, consume a message, call a remote API, implement a data
-driver, or connect to an event bus.
+The adapters layer contains the integrations that connect a context to external
+systems. An adapter wraps a third-party library so that the context can interact
+with a concrete transport or infrastructure path. An adapter can implement an
+HTTP handler, consume a message, call a remote API, implement a data driver, or
+connect to an event bus. Adapters are instantiated in port modules, which
+compose them with application services and expose the resulting capability at
+the context boundary.
 
 #### Ports
 
-Ports define the communication available at the context boundary.
-
-They live at the context root because they describe how the context is used
-from the outside. A port is the concrete object the context exposes. Adapters
-or other callers can use that port object and route work into an application
-process.
+Port modules define the communication surface available at the context boundary.
+Port modules live at the context root. Each port module instantiates the
+adapters the context requires, injects those adapters as dependencies into the
+application services that consume them, and exposes classes, functions, or
+constants that other modules can import and use. Each exported element
+represents a wired application capability the context makes available to callers
+outside its boundary.
 
 The generated template starts with `example.ts`. As the context grows,
 additional context root `.ts` modules can define more ports. The detailed
@@ -163,15 +175,16 @@ flowchart LR
     application --> domain
 ```
 
-This direction keeps the core model isolated from transport and infrastructure
-details. Adapters integrate with external libraries and context ports. Ports
-connect the context boundary to application processes. The deeper a layer is,
-the less it should know about the outside.
+This direction keeps the domain layer isolated from transport and infrastructure
+details. Adapters integrate with external libraries. Port modules instantiate
+adapters, inject them into application services, and connect the context
+boundary to the resulting wired processes. The deeper a layer is, the more
+execution-context agnostic it remains.
 
 > **Warning**
-> Avoid importing adapter-specific concerns into the domain layer. Once a domain
-> object depends on HTTP, database, or framework details, the context boundary
-> becomes harder to change.
+> Domain code must remain execution-context agnostic. A domain object that
+> imports HTTP, database, framework, or runtime-specific modules binds itself to
+> one execution environment and loses portability across environments.
 
 #### Example Flow
 

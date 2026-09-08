@@ -1,17 +1,19 @@
 ### Context Ports
 
-Context ports define the communication available at a context boundary.
-They describe which concrete capability a context exposes, what data enters
-that capability, and what data it returns.
+A context port module defines the communication surface available at a context
+boundary. A port module instantiates the adapters the context requires, injects
+those adapters as dependencies into the application services that consume them,
+and exposes classes, functions, or constants that other modules can import and
+integrate. Each exported element represents a wired application capability the
+context makes available beyond its own boundary.
 
-In practice a port is a specific boundary element of the system with identity:
-a command handler, a query entry point, an event consumer, a published
-endpoint, or another concrete interaction mechanism that exists because the
-running system exposes it.
+In practice a port is a specific boundary element with identity: a command
+handler, a query entry point, an event consumer, a published endpoint, or
+another concrete interaction mechanism that the running system exposes.
 
-Types and interfaces still matter, but they are secondary. Their role is to
-make the port explicit. The main concern is the port as a real executable
-surface that another actor can call or observe.
+Types and interfaces support the port definition but are secondary to the
+exported elements. The primary concern is the concrete surface that another
+module can import and call.
 
 > **Hint**
 > The generated `example.ts` file is only a placeholder. Replace it when
@@ -238,9 +240,9 @@ become easier to maintain when each port has its own identity and
 responsibility.
 
 > **Warning**
-> A port should define an exposed boundary capability.
-> Keep business rules, repository logic, and infrastructure details in their
-> corresponding layers.
+> A port module exposes boundary capabilities and instantiates adapters.
+> Keep business rules in the domain layer, orchestration logic in the
+> application layer, and infrastructure implementations in the adapters layer.
 
 #### Example Layout
 

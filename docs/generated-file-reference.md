@@ -88,14 +88,14 @@ application coordinates data access without forcing a specific driver.
 
 #### Context Files
 
-Each generated context starts with an example port file and three directories.
+Each generated context starts with an example port module and three directories.
 
 | Path | Responsibility |
 | --- | --- |
-| `<context>/example.ts` | Example module for context ports. All context root `.ts` files are expected to define context ports. |
-| `<context>/domain/` | Domain capabilities and rules for the context. |
-| `<context>/application/` | Processes that use domain capabilities to fulfill system purposes. |
-| `<context>/adapters/` | Integrations that wrap third-party libraries or context ports. |
+| `<context>/example.ts` | Example port module. Each context root `.ts` file instantiates the adapters the context requires, injects those adapters into the application services that consume them, and exposes classes, functions, or constants as integration points for other modules. |
+| `<context>/domain/` | Domain capabilities and rules for the context. Domain code is execution-context agnostic and runs unchanged across backend, browser, and mobile environments. |
+| `<context>/application/` | Processes that use domain capabilities to fulfill system purposes. This layer carries the execution context and may include logic specific to backend, browser, or mobile environments. |
+| `<context>/adapters/` | Integrations that wrap third-party libraries. Adapters are instantiated in port modules. |
 
 The `<context>/` path is a placeholder for the actual context name. Your
 project can generate one or more contexts with the same internal layout.
@@ -113,7 +113,7 @@ Use the following sequence when deciding where new code belongs.
 4. Put context-specific rules in `<context>/domain`.
 5. Put use cases in `<context>/application`.
 6. Put transport and infrastructure integrations in `<context>/adapters`.
-7. Put concrete boundary ports in context root `.ts` files.
+7. Instantiate adapters and expose boundary capabilities in context root `.ts` files.
 
 This reference explains placement. The architectural rationale is described in
 `library-structure.md`.
