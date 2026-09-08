@@ -67,6 +67,11 @@ type RegistrationEntry<T extends DependencyMap<T>> = [
 ]
 
 /**
+ * Represents one prepared container entry.
+ */
+type PreparedEntry<T extends DependencyMap<T>> = [DependencyToken<T>, ContainerEntry<T>]
+
+/**
  * Represents one resolved container entry.
  */
 type ResolvedEntry<T extends DependencyMap<T>> = [DependencyToken<T>, ContainerEntry<T>]
@@ -170,7 +175,16 @@ class Resolver<T extends DependencyMap<T>> implements DependencyResolver<T> {
         this.stack.push(token)
 
         try {
-            const instance = entry.factory(this) as T[Token]
+            const factoryResult = entry.factory(this) as unknown
+            const isInstance = typeof factoryResult === 'object' && factoryResult !== null
+
+            if (isInstance === false) {
+                const message = `Factory for token ${token} must return an object instance`
+
+                throw new Error(message)
+            }
+
+            const instance = factoryResult as T[Token]
             const resolvedEntry: ContainerEntry<T> = {
                 factory: entry.factory,
                 instance
@@ -201,30 +215,55 @@ class Resolver<T extends DependencyMap<T>> implements DependencyResolver<T> {
 /**
  * Stores dependency factories and resolves lazy singleton instances.
  *
- * Mutating operations are serialized through an asynchronous write lock so
- * concurrent callers cannot create or commit conflicting singleton state.
+ * Every mutation completes synchronously without yielding control. This keeps
+ * writes atomic when callers invoke the container from asynchronous workflows.
  */
 export class Container<T extends DependencyMap<T>> {
     protected readonly entries: ContainerEntries<T> = Object.create(
         null
     ) as ContainerEntries<T>
 
-    private isWriteLocked: boolean = false
-
-    private readonly writeWaiters: (() => void)[] = []
+    private isWriteActive: boolean = false
 
     /**
-     * Registers dependency factories as one serialized atomic operation.
+     * Registers dependency factories as one atomic operation.
      *
      * @param entries - Dependency registrations of type `Registrations`.
-     * @returns A promise containing the current `Container` instance.
-     * @throws {Error} When any token is already registered.
+     * @returns The current `Container` instance.
+     * @throws {Error} When a token is already registered, a registration is invalid,
+     * or another write is already active on the same container.
      */
-    async register(entries: Registrations<T>): Promise<this> {
-        const operation = (): this => {
-            const registrations = Object.entries(entries) as RegistrationEntry<T>[]
+    register(entries: Registrations<T>): this {
+        this.beginWrite()
 
-            for (const [token] of registrations) {
+        try {
+            const registrations = Object.entries(entries) as RegistrationEntry<T>[]
+            const preparedEntries: PreparedEntry<T>[] = []
+
+            for (const [token, registration] of registrations) {
+                if (registration === undefined) {
+                    const message = `Token ${token} has an invalid registration`
+
+                    throw new Error(message)
+                }
+
+                const factory = registration.factory
+
+                if (typeof factory !== 'function') {
+                    const message = `Token ${token} has an invalid factory`
+
+                    throw new Error(message)
+                }
+
+                const entry: ContainerEntry<T> = {
+                    factory,
+                    instance: null
+                }
+
+                preparedEntries.push([token, entry])
+            }
+
+            for (const [token] of preparedEntries) {
                 const isRegistered = this.has(token)
 
                 if (isRegistered === true) {
@@ -234,36 +273,29 @@ export class Container<T extends DependencyMap<T>> {
                 }
             }
 
-            for (const [token, registration] of registrations) {
-                const entry: ContainerEntry<T> = {
-                    factory: registration.factory,
-                    instance: null
-                }
-
+            for (const [token, entry] of preparedEntries) {
                 this.entries[token] = entry
             }
 
             return this
+        } finally {
+            this.endWrite()
         }
-
-        const container = await this.withWriteLock(operation)
-
-        return container
     }
 
     /**
-     * Resolves and commits one dependency graph as a serialized operation.
-     *
-     * Holding the write lock across construction prevents concurrent calls from
-     * creating more than one singleton for the same unresolved token.
+     * Resolves and commits one dependency graph as one atomic operation.
      *
      * @param token - Dependency token of type `Token`.
-     * @returns A promise containing the dependency instance of type `T[Token]`.
+     * @returns The dependency instance of type `T[Token]`.
      * @throws {CircularDependencyError} When the dependency graph contains a cycle.
-     * @throws {Error} When the token is not registered or a factory propagates an error.
+     * @throws {Error} When the token is missing, a factory fails, or another write is
+     * already active on the same container.
      */
-    async resolve<Token extends DependencyToken<T>>(token: Token): Promise<T[Token]> {
-        const operation = (): T[Token] => {
+    resolve<Token extends DependencyToken<T>>(token: Token): T[Token] {
+        this.beginWrite()
+
+        try {
             const resolver = new Resolver<T>(this.entries)
             const instance = resolver.resolve(token)
             const resolvedEntries = Object.entries(resolver.state) as ResolvedEntry<T>[]
@@ -273,18 +305,13 @@ export class Container<T extends DependencyMap<T>> {
             }
 
             return instance
+        } finally {
+            this.endWrite()
         }
-
-        const instance = await this.withWriteLock(operation)
-
-        return instance
     }
 
     /**
      * Reports whether a dependency token is currently registered.
-     *
-     * Callers that depend on a preceding asynchronous mutation must await that
-     * mutation before reading the container.
      *
      * @param token - Dependency token of type `DependencyToken`.
      * @returns A `boolean` indicating whether the token is registered.
@@ -297,16 +324,19 @@ export class Container<T extends DependencyMap<T>> {
     }
 
     /**
-     * Removes a registered dependency token as a serialized operation.
+     * Removes one registered dependency token.
      *
      * This operation does not invalidate dependent singleton instances that are
      * already resolved and cached.
      *
      * @param token - Dependency token of type `DependencyToken`.
-     * @returns A promise containing whether a registration was removed.
+     * @returns A `boolean` indicating whether a registration was removed.
+     * @throws {Error} When another write is already active on the same container.
      */
-    async unregister(token: DependencyToken<T>): Promise<boolean> {
-        const operation = (): boolean => {
+    unregister(token: DependencyToken<T>): boolean {
+        this.beginWrite()
+
+        try {
             const isRegistered = this.has(token)
 
             if (isRegistered === false) {
@@ -316,86 +346,51 @@ export class Container<T extends DependencyMap<T>> {
             delete this.entries[token]
 
             return true
+        } finally {
+            this.endWrite()
         }
-
-        const isRemoved = await this.withWriteLock(operation)
-
-        return isRemoved
     }
 
     /**
-     * Removes every dependency registration and cached instance serially.
+     * Removes every dependency registration and cached instance.
      *
-     * @returns A promise that resolves after the container is cleared.
+     * @returns Nothing.
+     * @throws {Error} When another write is already active on the same container.
      */
-    async clear(): Promise<void> {
-        const operation = (): void => {
+    clear(): void {
+        this.beginWrite()
+
+        try {
             const tokens = Object.keys(this.entries)
 
             for (const token of tokens) {
                 delete this.entries[token]
             }
+        } finally {
+            this.endWrite()
         }
-
-        await this.withWriteLock(operation)
     }
 
     /**
-     * Acquires the asynchronous write lock in first-in, first-out order.
+     * Starts one synchronous write section.
      *
-     * @returns A promise that resolves after exclusive write access is acquired.
+     * @returns Nothing.
+     * @throws {Error} When another write is already active on the same container.
      */
-    private async acquireWriteLock(): Promise<void> {
-        const isAvailable = this.isWriteLocked === false
-
-        if (isAvailable === true) {
-            this.isWriteLocked = true
-
-            return
+    private beginWrite(): void {
+        if (this.isWriteActive === true) {
+            throw new Error('Container write is already in progress')
         }
 
-        const waitForWrite = new Promise<void>(
-            (resolve: (value?: void | PromiseLike<void>) => void): void => {
-                this.writeWaiters.push(resolve)
-            }
-        )
-
-        await waitForWrite
+        this.isWriteActive = true
     }
 
     /**
-     * Releases the write lock and transfers ownership to the next waiter.
+     * Ends the current synchronous write section.
      *
      * @returns Nothing.
      */
-    private releaseWriteLock(): void {
-        const nextWrite = this.writeWaiters.shift()
-
-        if (nextWrite === undefined) {
-            this.isWriteLocked = false
-
-            return
-        }
-
-        nextWrite()
-    }
-
-    /**
-     * Runs one synchronous container mutation with exclusive write access.
-     *
-     * @param operation - Synchronous operation executed while holding the lock.
-     * @returns A promise containing the operation result of type `Result`.
-     * @throws {Error} When the operation propagates an error.
-     */
-    private async withWriteLock<Result>(operation: () => Result): Promise<Result> {
-        await this.acquireWriteLock()
-
-        try {
-            const result = operation()
-
-            return result
-        } finally {
-            this.releaseWriteLock()
-        }
+    private endWrite(): void {
+        this.isWriteActive = false
     }
 } //:: Container
