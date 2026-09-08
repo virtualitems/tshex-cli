@@ -229,54 +229,75 @@ import { Email } from './shared/domain/value-objects.ts'
 
 const logger = new FileLogger('app.log')
 
-const container = new Container()
+type Dependencies = {
+  DatabaseDriver: InMemoryDatabaseDriver
+  StudentsManager: InMemoryDatabaseManager
+  StudentsRepository: StudentsRepository
+  StudentsService: StudentsService
+  CoursesManager: InMemoryDatabaseManager
+  CoursesRepository: CoursesRepository
+  CoursesService: CoursesService
+  InscriptionsManager: InMemoryDatabaseManager
+  InscriptionsRepository: InscriptionsRepository
+  InscriptionsService: InscriptionsService
+}
+
+const container = new Container<Dependencies>()
 
 container.register({
-    DatabaseDriver: { factory: () => new InMemoryDatabaseDriver({}) },
-
-    StudentsManager: {
-        factory: (r) => r.resolve<InMemoryDatabaseDriver>('DatabaseDriver').connect('students')
-    },
-    StudentsRepository: {
-        factory: (r) => new StudentsRepository(r.resolve<InMemoryDatabaseManager>('StudentsManager'))
-    },
-    StudentsService: {
-        factory: (r) => new StudentsService(
-            r.resolve<InMemoryDatabaseManager>('StudentsManager'),
-            r.resolve<StudentsRepository>('StudentsRepository')
-        )
-    },
-
-    CoursesManager: {
-        factory: (r) => r.resolve<InMemoryDatabaseDriver>('DatabaseDriver').connect('courses')
-    },
-    CoursesRepository: {
-        factory: (r) => new CoursesRepository(r.resolve<InMemoryDatabaseManager>('CoursesManager'))
-    },
-    CoursesService: {
-        factory: (r) => new CoursesService(
-            r.resolve<InMemoryDatabaseManager>('CoursesManager'),
-            r.resolve<CoursesRepository>('CoursesRepository')
-        )
-    },
-
-    InscriptionsManager: {
-        factory: (r) => r.resolve<InMemoryDatabaseDriver>('DatabaseDriver').connect('inscriptions')
-    },
-    InscriptionsRepository: {
-        factory: (r) => new InscriptionsRepository(r.resolve<InMemoryDatabaseManager>('InscriptionsManager'))
-    },
-    InscriptionsService: {
-        factory: (r) => new InscriptionsService(
-            r.resolve<InMemoryDatabaseManager>('InscriptionsManager'),
-            r.resolve<InscriptionsRepository>('InscriptionsRepository')
-        )
-    }
+  DatabaseDriver: {
+    factory: () => new InMemoryDatabaseDriver({})
+  },
+  StudentsManager: {
+    factory: (resolver) =>
+      resolver.resolve('DatabaseDriver').connect('students')
+  },
+  StudentsRepository: {
+    factory: (resolver) =>
+      new StudentsRepository(resolver.resolve('StudentsManager'))
+  },
+  StudentsService: {
+    factory: (resolver) =>
+      new StudentsService(
+        resolver.resolve('StudentsManager'),
+        resolver.resolve('StudentsRepository')
+      )
+  },
+  CoursesManager: {
+    factory: (resolver) =>
+      resolver.resolve('DatabaseDriver').connect('courses')
+  },
+  CoursesRepository: {
+    factory: (resolver) =>
+      new CoursesRepository(resolver.resolve('CoursesManager'))
+  },
+  CoursesService: {
+    factory: (resolver) =>
+      new CoursesService(
+        resolver.resolve('CoursesManager'),
+        resolver.resolve('CoursesRepository')
+      )
+  },
+  InscriptionsManager: {
+    factory: (resolver) =>
+      resolver.resolve('DatabaseDriver').connect('inscriptions')
+  },
+  InscriptionsRepository: {
+    factory: (resolver) =>
+      new InscriptionsRepository(resolver.resolve('InscriptionsManager'))
+  },
+  InscriptionsService: {
+    factory: (resolver) =>
+      new InscriptionsService(
+        resolver.resolve('InscriptionsManager'),
+        resolver.resolve('InscriptionsRepository')
+      )
+  }
 })
 
-const studentsService = container.resolve<StudentsService>('StudentsService')
-const coursesService = container.resolve<CoursesService>('CoursesService')
-const inscriptionsService = container.resolve<InscriptionsService>('InscriptionsService')
+const studentsService = container.resolve('StudentsService')
+const coursesService = container.resolve('CoursesService')
+const inscriptionsService = container.resolve('InscriptionsService')
 
 const roster = new Roster(studentsService, logger)
 const catalog = new Catalog(coursesService, logger)

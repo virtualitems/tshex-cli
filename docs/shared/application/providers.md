@@ -1,76 +1,141 @@
 ### Providers
 
-`providers.ts` contains a dependency injection container that resolves services
-as lazy singletons. It keeps the wiring of collaborators out of domain and
-application code so that a context can change implementations without modifying
-its use cases.
+`providers.ts` contains a dependency injection container that resolves object
+instances as lazy singletons. It keeps collaborator wiring outside domain and
+application code and preserves the dependency type associated with each token.
 
-#### Types
+#### Dependency map
 
-Two internal types describe the container's records.
-
-`ContainerEntry` tracks the factory and the resolved instance for a token:
+A dependency map defines the relationship between each string token and the
+object instance returned for that token.
 
 ```ts title="shared/application/providers.ts"
-type ContainerEntry<T = unknown> = {
-    instance: T | null
-    factory: (r: Resolver) => T
+type Dependencies = {
+  DatabaseDriver: InMemoryDatabaseDriver
+  StudentsManager: InMemoryDatabaseManager
+  StudentsRepository: StudentsRepository
+  StudentsService: StudentsService
 }
 ```
 
-`Registration` is the shape accepted by `register`. It carries only the factory,
-since the instance starts as `null` and is filled on the first resolve:
+Every dependency must be an object. Primitive values, `null`, and `undefined`
+are not valid dependency instances. The factory return type is checked by
+TypeScript and the resolver also rejects non-object results at runtime.
+
+#### Registrations
+
+`Registrations<T>` maps dependency tokens to factories. Each factory receives a
+typed `DependencyResolver<T>` and must return the instance associated with its
+token.
 
 ```ts title="shared/application/providers.ts"
-type Registration<T> = {
-    factory: (resolver: Resolver) => T
+export type Registrations<T extends DependencyMap<T>> = Partial<{
+  [Token in DependencyToken<T>]: Registration<T, Token>
+}>
+```
+
+The token determines the return type of `resolve`, so callers do not provide a
+generic type argument manually.
+
+```ts
+const service = container.resolve('StudentsService')
+// service: StudentsService
+```
+
+#### Storage
+
+The container stores registrations in an object created with
+`Object.create(null)` instead of a `Map` or a regular object. The registry has no
+prototype, so tokens such as `__proto__`, `constructor`, and `hasOwnProperty`
+behave like ordinary dependency tokens.
+
+Each entry stores its factory and the cached singleton instance:
+
+```ts title="shared/application/providers.ts"
+interface ContainerEntry<T extends DependencyMap<T>> {
+  readonly factory: Factory<T>
+  readonly instance: T[DependencyToken<T>] | null
 }
 ```
+
+`null` represents an unresolved entry. It cannot conflict with a dependency
+value because dependencies are restricted to object instances.
 
 #### Container
 
-`Container` is the public class. It stores entries in a `Map` keyed by string
-tokens and resolves each entry once, caching the result for subsequent calls.
+`Container<T>` is the public registry and singleton cache.
 
 ```ts title="shared/application/providers.ts"
-export class Container {
-    register(entries: Record<string, Registration<unknown>>): this
-    resolve<T>(token: string): T
-    has(token: string): boolean
-    unregister(token: string): boolean
-    clear(): void
+export class Container<T extends DependencyMap<T>> {
+  register(entries: Registrations<T>): this
+  resolve<Token extends DependencyToken<T>>(token: Token): T[Token]
+  has(token: DependencyToken<T>): boolean
+  unregister(token: DependencyToken<T>): boolean
+  clear(): void
 }
 ```
 
 | Method | Description |
 | --- | --- |
-| `register(entries)` | Registers one or more tokens. Throws if a token is already present. Returns `this` for chaining. |
-| `resolve<T>(token)` | Returns the singleton instance for the token, creating it on the first call. Throws if the token is not registered. |
-| `has(token)` | Returns `true` if the token is registered. |
-| `unregister(token)` | Removes the token and its cached instance. Returns `true` if it existed. Does not invalidate dependents already resolved. |
-| `clear()` | Removes all registrations and cached instances. |
+| `register(entries)` | Validates every registration before committing any entry. Throws when a token is already registered or a factory is invalid. |
+| `resolve(token)` | Returns the singleton associated with the token. The factory runs only when the instance has not been resolved before. |
+| `has(token)` | Returns whether the token is registered. |
+| `unregister(token)` | Removes the token and its cached instance. It does not invalidate already-resolved dependents. |
+| `clear()` | Removes every registration and cached instance. |
+
+#### Atomic writes
+
+Container mutations execute synchronously and do not yield control while they
+are changing the registry. This keeps each mutation atomic even when callers
+start operations from asynchronous workflows.
+
+`register` prepares and validates all entries before writing them. If validation
+fails, no registration from that call is committed.
+
+`resolve` builds the dependency graph in a temporary resolver and commits the
+resolved entries only after the complete graph succeeds. If any factory throws,
+no partially resolved singleton from that graph is written to the container.
+
+The container also rejects reentrant writes while another write is active. A
+factory must resolve collaborators through the `DependencyResolver` it receives
+instead of mutating the `Container` directly.
+
+Factories are synchronous. An asynchronous factory is outside the container
+contract and would require a different resolution transaction model.
 
 #### Circular dependency detection
 
-The container tracks in-progress resolutions during each `resolve` call. If a
-factory requests a token that is already being resolved in the same call chain,
-a `CircularDependencyError` is thrown before any infinite loop can occur.
+The temporary resolver tracks the active dependency path. If a factory requests
+a token already being resolved in the same graph, it throws a
+`CircularDependencyError` with the complete cycle.
 
 ```ts
+interface Dependencies {
+  ServiceA: ServiceA
+  ServiceB: ServiceB
+}
+
+const container = new Container<Dependencies>()
+
 container.register({
-    ServiceA: { factory: (r) => new ServiceA(r.resolve<ServiceB>('ServiceB')) },
-    ServiceB: { factory: (r) => new ServiceB(r.resolve<ServiceA>('ServiceA')) },
+  ServiceA: {
+    factory: (resolver) =>
+      new ServiceA(resolver.resolve('ServiceB'))
+  },
+  ServiceB: {
+    factory: (resolver) =>
+      new ServiceB(resolver.resolve('ServiceA'))
+  }
 })
 
-container.resolve<ServiceA>('ServiceA')
-// throws: Circular dependency detected for ServiceA
+container.resolve('ServiceA')
+// throws: Circular dependency detected: ServiceA -> ServiceB -> ServiceA
 ```
 
 #### Usage
 
-Register all tokens at once by passing a record to `register`. Each key is the
-unique string identifier for that service. Factories receive the resolver so
-they can declare their own dependencies.
+Declare the dependency map once, create a typed container, and register the
+factories. Dependencies inside each factory are inferred from their tokens.
 
 ```ts title="main.ts"
 import { Container } from './shared/application/providers.ts'
@@ -86,81 +151,101 @@ import { CoursesService } from './courses/application/services.ts'
 import { InscriptionsRepository } from './enrollment/application/repositories.ts'
 import { InscriptionsService } from './enrollment/application/services.ts'
 
-const container = new Container()
+type Dependencies = {
+  DatabaseDriver: InMemoryDatabaseDriver
+  StudentsManager: InMemoryDatabaseManager
+  StudentsRepository: StudentsRepository
+  StudentsService: StudentsService
+  CoursesManager: InMemoryDatabaseManager
+  CoursesRepository: CoursesRepository
+  CoursesService: CoursesService
+  InscriptionsManager: InMemoryDatabaseManager
+  InscriptionsRepository: InscriptionsRepository
+  InscriptionsService: InscriptionsService
+}
+
+const container = new Container<Dependencies>()
 
 container.register({
-    DatabaseDriver: { factory: () => new InMemoryDatabaseDriver({}) },
-
-    // students context
-    StudentsManager: {
-        factory: (r) => r.resolve<InMemoryDatabaseDriver>('DatabaseDriver').connect('students')
-    },
-    StudentsRepository: {
-        factory: (r) => new StudentsRepository(
-            r.resolve<InMemoryDatabaseManager>('StudentsManager')
-        )
-    },
-    StudentsService: {
-        factory: (r) => new StudentsService(
-            r.resolve<InMemoryDatabaseManager>('StudentsManager'),
-            r.resolve<StudentsRepository>('StudentsRepository')
-        )
-    },
-
-    // courses context
-    CoursesManager: {
-        factory: (r) => r.resolve<InMemoryDatabaseDriver>('DatabaseDriver').connect('courses')
-    },
-    CoursesRepository: {
-        factory: (r) => new CoursesRepository(
-            r.resolve<InMemoryDatabaseManager>('CoursesManager')
-        )
-    },
-    CoursesService: {
-        factory: (r) => new CoursesService(
-            r.resolve<InMemoryDatabaseManager>('CoursesManager'),
-            r.resolve<CoursesRepository>('CoursesRepository')
-        )
-    },
-
-    // enrollment context
-    InscriptionsManager: {
-        factory: (r) => r.resolve<InMemoryDatabaseDriver>('DatabaseDriver').connect('inscriptions')
-    },
-    InscriptionsRepository: {
-        factory: (r) => new InscriptionsRepository(
-            r.resolve<InMemoryDatabaseManager>('InscriptionsManager')
-        )
-    },
-    InscriptionsService: {
-        factory: (r) => new InscriptionsService(
-            r.resolve<InMemoryDatabaseManager>('InscriptionsManager'),
-            r.resolve<InscriptionsRepository>('InscriptionsRepository')
-        )
-    }
+  DatabaseDriver: {
+    factory: () => new InMemoryDatabaseDriver({})
+  },
+  StudentsManager: {
+    factory: (resolver) =>
+      resolver.resolve('DatabaseDriver').connect('students')
+  },
+  StudentsRepository: {
+    factory: (resolver) =>
+      new StudentsRepository(resolver.resolve('StudentsManager'))
+  },
+  StudentsService: {
+    factory: (resolver) =>
+      new StudentsService(
+        resolver.resolve('StudentsManager'),
+        resolver.resolve('StudentsRepository')
+      )
+  },
+  CoursesManager: {
+    factory: (resolver) =>
+      resolver.resolve('DatabaseDriver').connect('courses')
+  },
+  CoursesRepository: {
+    factory: (resolver) =>
+      new CoursesRepository(resolver.resolve('CoursesManager'))
+  },
+  CoursesService: {
+    factory: (resolver) =>
+      new CoursesService(
+        resolver.resolve('CoursesManager'),
+        resolver.resolve('CoursesRepository')
+      )
+  },
+  InscriptionsManager: {
+    factory: (resolver) =>
+      resolver.resolve('DatabaseDriver').connect('inscriptions')
+  },
+  InscriptionsRepository: {
+    factory: (resolver) =>
+      new InscriptionsRepository(resolver.resolve('InscriptionsManager'))
+  },
+  InscriptionsService: {
+    factory: (resolver) =>
+      new InscriptionsService(
+        resolver.resolve('InscriptionsManager'),
+        resolver.resolve('InscriptionsRepository')
+      )
+  }
 })
+
+const studentsService = container.resolve('StudentsService')
+const coursesService = container.resolve('CoursesService')
+const inscriptionsService = container.resolve('InscriptionsService')
 ```
 
 Each context connects to its own named collection through the shared
-`InMemoryDatabaseDriver`. Because each manager token resolves a distinct
-connection, the collections remain independent.
+`InMemoryDatabaseDriver`. Each manager token resolves and caches a different
+connection instance.
 
 > **Warning**
-> `unregister` removes the token and its cached instance but does not
-> invalidate other tokens whose cached instances already hold a reference to
-> the removed service. Re-register and re-resolve dependents explicitly when
-> that situation matters.
+> `unregister` removes the token and its cached instance but does not invalidate
+> other tokens whose cached instances already hold a reference to the removed
+> service. Re-register and re-resolve dependents explicitly when that situation
+> matters.
 
 #### Example Flow
 
 ```mermaid
 flowchart LR
-    caller[Caller] --> container[Container]
-    container --> factory[Factory]
-    factory --> instance[Instance]
-    instance --> container
-    container --> caller
+  caller[Caller] --> container[Container]
+  container --> resolver[Temporary Resolver]
+  resolver --> factory[Factory]
+  factory --> instance[Instance]
+  instance --> resolver
+  resolver --> commit[Commit resolved graph]
+  commit --> container
+  container --> caller
 ```
 
-The caller invokes `resolve`. The container runs the factory only on the first
-call and returns the cached instance on every subsequent one.
+The caller invokes `resolve`. The temporary resolver builds the dependency graph
+and the container commits it only after successful resolution. Later calls
+return the cached singleton instance.
