@@ -11,7 +11,7 @@ export type DependencyMap<T> = {
 type DependencyToken<T> = Extract<keyof T, string>
 
 /**
- * Resolves registered dependency instances.
+ * Resolves registered dependency instances inside one dependency graph.
  */
 export interface DependencyResolver<T extends DependencyMap<T>> {
     /**
@@ -200,66 +200,91 @@ class Resolver<T extends DependencyMap<T>> implements DependencyResolver<T> {
 
 /**
  * Stores dependency factories and resolves lazy singleton instances.
+ *
+ * Mutating operations are serialized through an asynchronous write lock so
+ * concurrent callers cannot create or commit conflicting singleton state.
  */
-export class Container<T extends DependencyMap<T>> implements DependencyResolver<T> {
+export class Container<T extends DependencyMap<T>> {
     protected readonly entries: ContainerEntries<T> = Object.create(
         null
     ) as ContainerEntries<T>
 
+    private isWriteLocked: boolean = false
+
+    private readonly writeWaiters: (() => void)[] = []
+
     /**
-     * Registers dependency factories as one atomic operation.
+     * Registers dependency factories as one serialized atomic operation.
      *
      * @param entries - Dependency registrations of type `Registrations`.
-     * @returns The current `Container` instance.
+     * @returns A promise containing the current `Container` instance.
      * @throws {Error} When any token is already registered.
      */
-    register(entries: Registrations<T>): this {
-        const registrations = Object.entries(entries) as RegistrationEntry<T>[]
+    async register(entries: Registrations<T>): Promise<this> {
+        const operation = (): this => {
+            const registrations = Object.entries(entries) as RegistrationEntry<T>[]
 
-        for (const [token] of registrations) {
-            const isRegistered = this.has(token)
+            for (const [token] of registrations) {
+                const isRegistered = this.has(token)
 
-            if (isRegistered === true) {
-                const message = `Token ${token} is already registered`
+                if (isRegistered === true) {
+                    const message = `Token ${token} is already registered`
 
-                throw new Error(message)
-            }
-        }
-
-        for (const [token, registration] of registrations) {
-            const entry: ContainerEntry<T> = {
-                factory: registration.factory,
-                instance: null
+                    throw new Error(message)
+                }
             }
 
-            this.entries[token] = entry
+            for (const [token, registration] of registrations) {
+                const entry: ContainerEntry<T> = {
+                    factory: registration.factory,
+                    instance: null
+                }
+
+                this.entries[token] = entry
+            }
+
+            return this
         }
 
-        return this
+        const container = await this.withWriteLock(operation)
+
+        return container
     }
 
     /**
-     * Resolves a dependency and commits the graph only after successful resolution.
+     * Resolves and commits one dependency graph as a serialized operation.
+     *
+     * Holding the write lock across construction prevents concurrent calls from
+     * creating more than one singleton for the same unresolved token.
      *
      * @param token - Dependency token of type `Token`.
-     * @returns The dependency instance of type `T[Token]`.
+     * @returns A promise containing the dependency instance of type `T[Token]`.
      * @throws {CircularDependencyError} When the dependency graph contains a cycle.
      * @throws {Error} When the token is not registered or a factory propagates an error.
      */
-    resolve<Token extends DependencyToken<T>>(token: Token): T[Token] {
-        const resolver = new Resolver<T>(this.entries)
-        const instance = resolver.resolve(token)
-        const resolvedEntries = Object.entries(resolver.state) as ResolvedEntry<T>[]
+    async resolve<Token extends DependencyToken<T>>(token: Token): Promise<T[Token]> {
+        const operation = (): T[Token] => {
+            const resolver = new Resolver<T>(this.entries)
+            const instance = resolver.resolve(token)
+            const resolvedEntries = Object.entries(resolver.state) as ResolvedEntry<T>[]
 
-        for (const [key, value] of resolvedEntries) {
-            this.entries[key] = value
+            for (const [key, value] of resolvedEntries) {
+                this.entries[key] = value
+            }
+
+            return instance
         }
+
+        const instance = await this.withWriteLock(operation)
 
         return instance
     }
 
     /**
-     * Reports whether a dependency token is registered.
+     * Reports whether a dependency token is currently registered.
+     *
+     * Callers that depend on a preceding asynchronous mutation must await that
+     * mutation before reading the container.
      *
      * @param token - Dependency token of type `DependencyToken`.
      * @returns A `boolean` indicating whether the token is registered.
@@ -272,36 +297,105 @@ export class Container<T extends DependencyMap<T>> implements DependencyResolver
     }
 
     /**
-     * Removes a registered dependency token.
+     * Removes a registered dependency token as a serialized operation.
      *
      * This operation does not invalidate dependent singleton instances that are
      * already resolved and cached.
      *
      * @param token - Dependency token of type `DependencyToken`.
-     * @returns A `boolean` indicating whether a registration was removed.
+     * @returns A promise containing whether a registration was removed.
      */
-    unregister(token: DependencyToken<T>): boolean {
-        const isRegistered = this.has(token)
+    async unregister(token: DependencyToken<T>): Promise<boolean> {
+        const operation = (): boolean => {
+            const isRegistered = this.has(token)
 
-        if (isRegistered === false) {
-            return false
+            if (isRegistered === false) {
+                return false
+            }
+
+            delete this.entries[token]
+
+            return true
         }
 
-        delete this.entries[token]
+        const isRemoved = await this.withWriteLock(operation)
 
-        return true
+        return isRemoved
     }
 
     /**
-     * Removes every dependency registration and cached instance.
+     * Removes every dependency registration and cached instance serially.
+     *
+     * @returns A promise that resolves after the container is cleared.
+     */
+    async clear(): Promise<void> {
+        const operation = (): void => {
+            const tokens = Object.keys(this.entries)
+
+            for (const token of tokens) {
+                delete this.entries[token]
+            }
+        }
+
+        await this.withWriteLock(operation)
+    }
+
+    /**
+     * Acquires the asynchronous write lock in first-in, first-out order.
+     *
+     * @returns A promise that resolves after exclusive write access is acquired.
+     */
+    private async acquireWriteLock(): Promise<void> {
+        const isAvailable = this.isWriteLocked === false
+
+        if (isAvailable === true) {
+            this.isWriteLocked = true
+
+            return
+        }
+
+        const waitForWrite = new Promise<void>(
+            (resolve: (value?: void | PromiseLike<void>) => void): void => {
+                this.writeWaiters.push(resolve)
+            }
+        )
+
+        await waitForWrite
+    }
+
+    /**
+     * Releases the write lock and transfers ownership to the next waiter.
      *
      * @returns Nothing.
      */
-    clear(): void {
-        const tokens = Object.keys(this.entries)
+    private releaseWriteLock(): void {
+        const nextWrite = this.writeWaiters.shift()
 
-        for (const token of tokens) {
-            delete this.entries[token]
+        if (nextWrite === undefined) {
+            this.isWriteLocked = false
+
+            return
+        }
+
+        nextWrite()
+    }
+
+    /**
+     * Runs one synchronous container mutation with exclusive write access.
+     *
+     * @param operation - Synchronous operation executed while holding the lock.
+     * @returns A promise containing the operation result of type `Result`.
+     * @throws {Error} When the operation propagates an error.
+     */
+    private async withWriteLock<Result>(operation: () => Result): Promise<Result> {
+        await this.acquireWriteLock()
+
+        try {
+            const result = operation()
+
+            return result
+        } finally {
+            this.releaseWriteLock()
         }
     }
 } //:: Container
