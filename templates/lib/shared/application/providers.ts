@@ -1,104 +1,307 @@
-class CircularDependencyError extends Error {
-    constructor(token: string) {
-        super(`Circular dependency detected for ${token}`)
-        this.name = 'CircularDependencyError'
-    }
-}
-
-type ContainerEntry<T = unknown> = {
-    instance: T | null
-    factory: (r: Resolver) => T
-}
-
-type Registration<T> = {
-    factory: (resolver: Resolver) => T
-}
-
-class Resolver {
-    state: Map<string, ContainerEntry> = new Map()
-
-    constructor(private table: Map<string, ContainerEntry>) {}
-
-    resolve<T>(token: string): T {
-        if (!this.table.has(token)) {
-            throw new Error(`Token ${token} is not registered`)
-        }
-
-        if (this.state.has(token)) {
-            const entry = this.state.get(token)!
-
-            if (entry.instance === null) {
-                throw new CircularDependencyError(token)
-            }
-
-            return entry.instance as T
-        }
-
-        const entry = this.table.get(token)!
-
-        if (entry.instance !== null) {
-            this.state.set(token, entry)
-            return entry.instance as T
-        }
-
-        const stateEntry: ContainerEntry = { factory: entry.factory, instance: null }
-
-        this.state.set(token, stateEntry)
-
-        const instance = entry.factory(this)
-
-        stateEntry.instance = instance
-
-        return instance as T
-    }
+/**
+ * Restricts every dependency declared in a map to an object instance.
+ */
+export type DependencyMap<T> = {
+    [Token in keyof T]: object
 }
 
 /**
- * Dependency injection container with lazy singleton pattern.
- *
- * @example
- * container.register({
- *   Database: { factory: () => new Database() },
- *   UserService: { factory: (r) => new UserService(r.resolve<Database>('Database')) },
- * });
- * const svc = container.resolve<UserService>('UserService');
+ * Represents a string token from a dependency map.
  */
-export class Container {
-    protected entries: Map<string, ContainerEntry> = new Map()
+type DependencyToken<T> = Extract<keyof T, string>
 
-    register(entries: Record<string, Registration<unknown>>): this {
-        for (const [token, entry] of Object.entries(entries)) {
-            if (this.has(token)) {
-                throw new Error(`Token ${token} is already registered`)
+/**
+ * Resolves registered dependency instances.
+ */
+export interface DependencyResolver<T extends DependencyMap<T>> {
+    /**
+     * Resolves one dependency instance by token.
+     *
+     * @param token - Dependency token of type `Token`.
+     * @returns The dependency instance of type `T[Token]`.
+     * @throws {CircularDependencyError} When the dependency graph contains a cycle.
+     * @throws {Error} When the token is not registered or a factory propagates an error.
+     */
+    resolve<Token extends DependencyToken<T>>(token: Token): T[Token]
+}
+
+/**
+ * Creates one dependency instance through a resolver.
+ */
+type Factory<
+    Dependencies extends DependencyMap<Dependencies>,
+    Token extends DependencyToken<Dependencies> = DependencyToken<Dependencies>
+> = (resolver: DependencyResolver<Dependencies>) => Dependencies[Token]
+
+/**
+ * Defines the factory associated with one dependency token.
+ */
+interface Registration<
+    Dependencies extends DependencyMap<Dependencies>,
+    Token extends DependencyToken<Dependencies>
+> {
+    readonly factory: Factory<Dependencies, Token>
+}
+
+/**
+ * Stores a dependency factory and its resolved singleton instance.
+ */
+interface ContainerEntry<T extends DependencyMap<T>> {
+    readonly factory: Factory<T>
+    readonly instance: T[DependencyToken<T>] | null
+}
+
+/**
+ * Stores dependency entries in an object without a prototype.
+ */
+interface ContainerEntries<T extends DependencyMap<T>> {
+    [token: string]: ContainerEntry<T> | undefined
+}
+
+/**
+ * Represents one normalized registration entry.
+ */
+type RegistrationEntry<T extends DependencyMap<T>> = [
+    DependencyToken<T>,
+    Registration<T, DependencyToken<T>>
+]
+
+/**
+ * Represents one resolved container entry.
+ */
+type ResolvedEntry<T extends DependencyMap<T>> = [DependencyToken<T>, ContainerEntry<T>]
+
+/**
+ * Maps dependency tokens to their factories.
+ */
+export type Registrations<T extends DependencyMap<T>> = Partial<{
+    [Token in DependencyToken<T>]: Registration<T, Token>
+}>
+
+/**
+ * Reports a circular dependency and the complete cycle path.
+ */
+export class CircularDependencyError extends Error {
+    /**
+     * Creates a circular dependency error.
+     *
+     * @param path - Dependency cycle path of type `string[]`.
+     */
+    constructor(path: string[]) {
+        const pathText = path.join(' -> ')
+        const message = `Circular dependency detected: ${pathText}`
+
+        super(message)
+        this.name = 'CircularDependencyError'
+    }
+} //:: CircularDependencyError
+
+/**
+ * Resolves one dependency graph without committing partial results.
+ */
+class Resolver<T extends DependencyMap<T>> implements DependencyResolver<T> {
+    private readonly stack: DependencyToken<T>[] = []
+
+    private readonly stateEntries: ContainerEntries<T> = Object.create(
+        null
+    ) as ContainerEntries<T>
+
+    private readonly table: Readonly<ContainerEntries<T>>
+
+    /**
+     * Creates a resolver over a dependency table.
+     *
+     * @param table - Dependency table stored in an object without a prototype.
+     */
+    constructor(table: Readonly<ContainerEntries<T>>) {
+        this.table = table
+    }
+
+    /**
+     * Returns dependencies resolved during the current graph resolution.
+     *
+     * @returns A readonly object containing resolved dependency entries.
+     */
+    get state(): Readonly<ContainerEntries<T>> {
+        return this.stateEntries
+    }
+
+    /**
+     * Resolves one dependency instance by token.
+     *
+     * @param token - Dependency token of type `Token`.
+     * @returns The dependency instance of type `T[Token]`.
+     * @throws {CircularDependencyError} When the dependency graph contains a cycle.
+     * @throws {Error} When the token is not registered or a factory propagates an error.
+     */
+    resolve<Token extends DependencyToken<T>>(token: Token): T[Token] {
+        const stateEntry = this.stateEntries[token]
+
+        if (stateEntry !== undefined) {
+            if (stateEntry.instance === null) {
+                const path = this.circularPath(token)
+
+                throw new CircularDependencyError(path)
             }
-            this.entries.set(token, { factory: entry.factory, instance: null })
+
+            return stateEntry.instance as T[Token]
         }
+
+        const entry = this.table[token]
+
+        if (entry === undefined) {
+            const message = `Token ${token} is not registered`
+
+            throw new Error(message)
+        }
+
+        if (entry.instance !== null) {
+            this.stateEntries[token] = entry
+
+            return entry.instance as T[Token]
+        }
+
+        const pendingEntry: ContainerEntry<T> = {
+            factory: entry.factory,
+            instance: null
+        }
+
+        this.stateEntries[token] = pendingEntry
+        this.stack.push(token)
+
+        try {
+            const instance = entry.factory(this) as T[Token]
+            const resolvedEntry: ContainerEntry<T> = {
+                factory: entry.factory,
+                instance
+            }
+
+            this.stateEntries[token] = resolvedEntry
+
+            return instance
+        } finally {
+            this.stack.pop()
+        }
+    }
+
+    /**
+     * Builds the dependency path that closes a cycle.
+     *
+     * @param token - Repeated dependency token of type `DependencyToken`.
+     * @returns The complete circular path as a `string[]`.
+     */
+    private circularPath(token: DependencyToken<T>): string[] {
+        const index = this.stack.indexOf(token)
+        const path = [...this.stack.slice(index), token]
+
+        return path
+    }
+} //:: Resolver
+
+/**
+ * Stores dependency factories and resolves lazy singleton instances.
+ */
+export class Container<T extends DependencyMap<T>> implements DependencyResolver<T> {
+    protected readonly entries: ContainerEntries<T> = Object.create(
+        null
+    ) as ContainerEntries<T>
+
+    /**
+     * Registers dependency factories as one atomic operation.
+     *
+     * @param entries - Dependency registrations of type `Registrations`.
+     * @returns The current `Container` instance.
+     * @throws {Error} When any token is already registered.
+     */
+    register(entries: Registrations<T>): this {
+        const registrations = Object.entries(entries) as RegistrationEntry<T>[]
+
+        for (const [token] of registrations) {
+            const isRegistered = this.has(token)
+
+            if (isRegistered === true) {
+                const message = `Token ${token} is already registered`
+
+                throw new Error(message)
+            }
+        }
+
+        for (const [token, registration] of registrations) {
+            const entry: ContainerEntry<T> = {
+                factory: registration.factory,
+                instance: null
+            }
+
+            this.entries[token] = entry
+        }
+
         return this
     }
 
-    resolve<T>(token: string): T {
-        const resolver = new Resolver(this.entries)
-        const instance = resolver.resolve<T>(token)
+    /**
+     * Resolves a dependency and commits the graph only after successful resolution.
+     *
+     * @param token - Dependency token of type `Token`.
+     * @returns The dependency instance of type `T[Token]`.
+     * @throws {CircularDependencyError} When the dependency graph contains a cycle.
+     * @throws {Error} When the token is not registered or a factory propagates an error.
+     */
+    resolve<Token extends DependencyToken<T>>(token: Token): T[Token] {
+        const resolver = new Resolver<T>(this.entries)
+        const instance = resolver.resolve(token)
+        const resolvedEntries = Object.entries(resolver.state) as ResolvedEntry<T>[]
 
-        for (const [key, value] of resolver.state) {
-            this.entries.set(key, value)
+        for (const [key, value] of resolvedEntries) {
+            this.entries[key] = value
         }
 
         return instance
     }
 
-    has(token: string): boolean {
-        return this.entries.has(token)
+    /**
+     * Reports whether a dependency token is registered.
+     *
+     * @param token - Dependency token of type `DependencyToken`.
+     * @returns A `boolean` indicating whether the token is registered.
+     */
+    has(token: DependencyToken<T>): boolean {
+        const entry = this.entries[token]
+        const isRegistered = entry !== undefined
+
+        return isRegistered
     }
 
     /**
-     * WARNING: Does not invalidate dependent instances already resolved and cached.
+     * Removes a registered dependency token.
+     *
+     * This operation does not invalidate dependent singleton instances that are
+     * already resolved and cached.
+     *
+     * @param token - Dependency token of type `DependencyToken`.
+     * @returns A `boolean` indicating whether a registration was removed.
      */
-    unregister(token: string): boolean {
-        return this.entries.delete(token)
+    unregister(token: DependencyToken<T>): boolean {
+        const isRegistered = this.has(token)
+
+        if (isRegistered === false) {
+            return false
+        }
+
+        delete this.entries[token]
+
+        return true
     }
 
+    /**
+     * Removes every dependency registration and cached instance.
+     *
+     * @returns Nothing.
+     */
     clear(): void {
-        this.entries.clear()
+        const tokens = Object.keys(this.entries)
+
+        for (const token of tokens) {
+            delete this.entries[token]
+        }
     }
-}
+} //:: Container
