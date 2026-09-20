@@ -1,6 +1,5 @@
 /**
- * @description Represents a logical unit that groups multiple entities.
- * Its operations depend on the identities and collaboration of the entities that compose that unit.
+ * @description Abstract base for domain aggregates that group related entities under a consistency boundary.
  */
 export abstract class Aggregate {
     [property: string]: unknown

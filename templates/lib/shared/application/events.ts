@@ -1,6 +1,5 @@
 /**
- * @description Represents something that occurred in the application.
- * It carries the event time and its plain details.
+ * @description Abstract base for domain events that carry a timestamp and optional details.
  */
 export abstract class Event {
     [property: string]: unknown
@@ -12,7 +11,7 @@ export abstract class Event {
 } //:: class
 
 /**
- * @description Represents a reaction to an application event.
+ * @description Abstract handler that processes a specific domain event type.
  */
 export abstract class EventHandler {
     [property: string]: unknown
@@ -21,8 +20,7 @@ export abstract class EventHandler {
 } //:: class
 
 /**
- * @description Declares the interaction contract with an event bus.
- * It subscribes handlers, removes subscriptions, and dispatches events.
+ * @description Abstract dispatcher that routes domain events to their registered handlers.
  */
 export abstract class EventDispatcher {
     [property: string]: unknown

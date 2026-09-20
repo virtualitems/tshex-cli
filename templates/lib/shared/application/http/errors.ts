@@ -1,5 +1,5 @@
 /**
- * @description HTTP error with a specific status code and message.
+ * @description Error representing an HTTP response status code with its standard message.
  */
 export class HttpError extends Error {
     [property: string]: unknown
@@ -50,11 +50,7 @@ export class HttpError extends Error {
     public readonly code: number
 
     /**
-     * Creates an instance of HttpError.
-     *
-     * @constructor
-     * @param {number} code - The HTTP status code.
-     * @param {string} [message] - Fallback message if the status code is not recognized.
+     * @description Constructs the error with the HTTP status code and an optional custom message.
      */
     constructor(code: number, message?: string) {
         super(message ?? HttpError.messages[code] ?? 'Unknown Error')
