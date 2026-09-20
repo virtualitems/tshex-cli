@@ -11,7 +11,7 @@ export type DependencyMap<T> = {
 type DependencyToken<T> = Extract<keyof T, string>
 
 /**
- * Resolves registered dependency instances inside one dependency graph.
+ * Resolves registered dependency instances.
  */
 export interface DependencyResolver<T extends DependencyMap<T>> {
     /**
@@ -65,11 +65,6 @@ type RegistrationEntry<T extends DependencyMap<T>> = [
     DependencyToken<T>,
     Registration<T, DependencyToken<T>>
 ]
-
-/**
- * Represents one prepared container entry.
- */
-type PreparedEntry<T extends DependencyMap<T>> = [DependencyToken<T>, ContainerEntry<T>]
 
 /**
  * Represents one resolved container entry.
@@ -175,16 +170,7 @@ class Resolver<T extends DependencyMap<T>> implements DependencyResolver<T> {
         this.stack.push(token)
 
         try {
-            const factoryResult = entry.factory(this) as unknown
-            const isInstance = typeof factoryResult === 'object' && factoryResult !== null
-
-            if (isInstance === false) {
-                const message = `Factory for token ${token} must return an object instance`
-
-                throw new Error(message)
-            }
-
-            const instance = factoryResult as T[Token]
+            const instance = entry.factory(this) as T[Token]
             const resolvedEntry: ContainerEntry<T> = {
                 factory: entry.factory,
                 instance
@@ -214,104 +200,66 @@ class Resolver<T extends DependencyMap<T>> implements DependencyResolver<T> {
 
 /**
  * Stores dependency factories and resolves lazy singleton instances.
- *
- * Every mutation completes synchronously without yielding control. This keeps
- * writes atomic when callers invoke the container from asynchronous workflows.
  */
-export class Container<T extends DependencyMap<T>> {
+export class DependencyInjectionContainer<T extends DependencyMap<T>> implements DependencyResolver<T> {
     protected readonly entries: ContainerEntries<T> = Object.create(
         null
     ) as ContainerEntries<T>
-
-    private isWriteActive: boolean = false
 
     /**
      * Registers dependency factories as one atomic operation.
      *
      * @param entries - Dependency registrations of type `Registrations`.
-     * @returns The current `Container` instance.
-     * @throws {Error} When a token is already registered, a registration is invalid,
-     * or another write is already active on the same container.
+     * @returns The current `DependencyInjectionContainer` instance.
+     * @throws {Error} When any token is already registered.
      */
     register(entries: Registrations<T>): this {
-        this.beginWrite()
+        const registrations = Object.entries(entries) as RegistrationEntry<T>[]
 
-        try {
-            const registrations = Object.entries(entries) as RegistrationEntry<T>[]
-            const preparedEntries: PreparedEntry<T>[] = []
+        for (const [token] of registrations) {
+            const isRegistered = this.has(token)
 
-            for (const [token, registration] of registrations) {
-                if (registration === undefined) {
-                    const message = `Token ${token} has an invalid registration`
+            if (isRegistered === true) {
+                const message = `Token ${token} is already registered`
 
-                    throw new Error(message)
-                }
-
-                const factory = registration.factory
-
-                if (typeof factory !== 'function') {
-                    const message = `Token ${token} has an invalid factory`
-
-                    throw new Error(message)
-                }
-
-                const entry: ContainerEntry<T> = {
-                    factory,
-                    instance: null
-                }
-
-                preparedEntries.push([token, entry])
+                throw new Error(message)
             }
-
-            for (const [token] of preparedEntries) {
-                const isRegistered = this.has(token)
-
-                if (isRegistered === true) {
-                    const message = `Token ${token} is already registered`
-
-                    throw new Error(message)
-                }
-            }
-
-            for (const [token, entry] of preparedEntries) {
-                this.entries[token] = entry
-            }
-
-            return this
-        } finally {
-            this.endWrite()
         }
+
+        for (const [token, registration] of registrations) {
+            const entry: ContainerEntry<T> = {
+                factory: registration.factory,
+                instance: null
+            }
+
+            this.entries[token] = entry
+        }
+
+        return this
     }
 
     /**
-     * Resolves and commits one dependency graph as one atomic operation.
+     * Resolves a dependency and commits the graph only after successful resolution.
      *
      * @param token - Dependency token of type `Token`.
      * @returns The dependency instance of type `T[Token]`.
      * @throws {CircularDependencyError} When the dependency graph contains a cycle.
-     * @throws {Error} When the token is missing, a factory fails, or another write is
-     * already active on the same container.
+     * @throws {Error} When the token is not registered or a factory propagates an error.
      */
     resolve<Token extends DependencyToken<T>>(token: Token): T[Token] {
-        this.beginWrite()
+        const resolver = new Resolver<T>(this.entries)
+        const instance = resolver.resolve(token)
+        const resolvedEntries = Object.entries(resolver.state) as ResolvedEntry<T>[]
 
-        try {
-            const resolver = new Resolver<T>(this.entries)
-            const instance = resolver.resolve(token)
-            const resolvedEntries = Object.entries(resolver.state) as ResolvedEntry<T>[]
-
-            for (const [key, value] of resolvedEntries) {
-                this.entries[key] = value
-            }
-
-            return instance
-        } finally {
-            this.endWrite()
+        for (const [key, value] of resolvedEntries) {
+            this.entries[key] = value
         }
+
+        return instance
     }
 
     /**
-     * Reports whether a dependency token is currently registered.
+     * Reports whether a dependency token is registered.
      *
      * @param token - Dependency token of type `DependencyToken`.
      * @returns A `boolean` indicating whether the token is registered.
@@ -324,73 +272,36 @@ export class Container<T extends DependencyMap<T>> {
     }
 
     /**
-     * Removes one registered dependency token.
+     * Removes a registered dependency token.
      *
      * This operation does not invalidate dependent singleton instances that are
      * already resolved and cached.
      *
      * @param token - Dependency token of type `DependencyToken`.
      * @returns A `boolean` indicating whether a registration was removed.
-     * @throws {Error} When another write is already active on the same container.
      */
     unregister(token: DependencyToken<T>): boolean {
-        this.beginWrite()
+        const isRegistered = this.has(token)
 
-        try {
-            const isRegistered = this.has(token)
-
-            if (isRegistered === false) {
-                return false
-            }
-
-            delete this.entries[token]
-
-            return true
-        } finally {
-            this.endWrite()
+        if (isRegistered === false) {
+            return false
         }
+
+        delete this.entries[token]
+
+        return true
     }
 
     /**
      * Removes every dependency registration and cached instance.
      *
      * @returns Nothing.
-     * @throws {Error} When another write is already active on the same container.
      */
     clear(): void {
-        this.beginWrite()
+        const tokens = Object.keys(this.entries)
 
-        try {
-            const tokens = Object.keys(this.entries)
-
-            for (const token of tokens) {
-                delete this.entries[token]
-            }
-        } finally {
-            this.endWrite()
+        for (const token of tokens) {
+            delete this.entries[token]
         }
     }
-
-    /**
-     * Starts one synchronous write section.
-     *
-     * @returns Nothing.
-     * @throws {Error} When another write is already active on the same container.
-     */
-    private beginWrite(): void {
-        if (this.isWriteActive === true) {
-            throw new Error('Container write is already in progress')
-        }
-
-        this.isWriteActive = true
-    }
-
-    /**
-     * Ends the current synchronous write section.
-     *
-     * @returns Nothing.
-     */
-    private endWrite(): void {
-        this.isWriteActive = false
-    }
-} //:: Container
+} //:: DependencyInjectionContainer
