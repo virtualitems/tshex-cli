@@ -1,15 +1,32 @@
 import { DataManager } from './managers.ts'
 
 /**
- * @description Declares the connection contract with a data source driver.
- * It connects to the source, returns an enabled data manager, and disconnects when the work is done.
- * This declaration belongs to the application layer as a contract,
- * while its concrete implementation belongs to the adapters layer.
+ * @description Abstract persistence session that exposes a typed data manager and a disconnection method.
  */
-export abstract class DriverAdapter<M extends DataManager = DataManager> {
+export abstract class SessionManager<ManagerShape extends DataManager = DataManager> {
     [property: string]: unknown
 
-    public abstract connect(...args: unknown[]): M
+    /**
+     * @description Returns the data manager scoped to the specified resource within this session.
+     */
+    public abstract getDataManager(...args: unknown[]): ManagerShape
 
-    public abstract disconnect(): unknown
-} //:: class
+    /**
+     * @description Closes the session and releases the underlying persistence resources.
+     */
+    public abstract disconnect(): Promise<void>
+} //:: SessionManager
+
+/**
+ * @description Abstract driver that opens typed persistence sessions.
+ */
+export abstract class DriverManager<
+    SessionShape extends SessionManager = SessionManager
+> {
+    [property: string]: unknown
+
+    /**
+     * @description Opens and returns a new persistence session.
+     */
+    public abstract connect(...args: unknown[]): Promise<SessionShape>
+} //:: DriverManager
