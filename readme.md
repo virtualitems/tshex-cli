@@ -86,22 +86,28 @@ core/
 |-- shared/
 |   |-- application/
 |   |   |-- data/
-|   |   |   |-- capabilities.ts
 |   |   |   |-- drivers.ts
 |   |   |   |-- managers.ts
 |   |   |   `-- repositories.ts
+|   |   |-- adapters/
+|   |   |   `-- env.ts
 |   |   |-- events.ts
 |   |   |-- http/
 |   |   |   `-- errors.ts
 |   |   |-- loggers.ts
 |   |   |-- providers.ts
+|   |   |-- regex.ts
 |   |   |-- services.ts
+|   |   |-- sql.ts
 |   |   `-- validations.ts
 |   `-- domain/
 |       |-- aggregates.ts
 |       |-- entities.ts
-|       |-- errors.ts
-|       `-- value-objects.ts
+|       `-- value-objects/
+|           |-- booleans.ts
+|           |-- errors.ts
+|           |-- strings.ts
+|           `-- values.ts
 |-- types/
 |   |-- json.d.ts
 |   |-- locales.d.ts
@@ -160,6 +166,8 @@ users/
 |-- core/
 |-- hooks/
 |-- languages/
+|   |-- en.json
+|   `-- es.json
 `-- schemas/
 ```
 
@@ -227,6 +235,9 @@ This command helps you prepare a tests workspace that follows the shape of your 
 ## Documentation index
 
 From this point on, the guide is split into dedicated documents under `docs/`.
+The `docs/lib/`, `docs/ctx/`, `docs/ctx-react/`, and `docs/tests/` directories
+mirror the generated template paths. Each template file has a Markdown document
+at the corresponding path.
 
 ### General
 
@@ -244,16 +255,19 @@ From this point on, the guide is split into dedicated documents under `docs/`.
 ### Shared application
 
 - [shared/application/data](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/data.md)
+- [shared/application/adapters/env.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/adapters/env.md)
 - [shared/application/events.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/events.md)
 - [shared/application/http/errors.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/http/errors.md)
 - [shared/application/loggers.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/loggers.md)
 - [shared/application/providers.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/providers.md)
+- [shared/application/regex.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/regex.md)
 - [shared/application/services.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/services.md)
+- [shared/application/sql.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/sql.md)
 - [shared/application/validations.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/validations.md)
 
 ### Shared domain
 
 - [shared/domain/aggregates.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/domain/aggregates.md)
 - [shared/domain/entities.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/domain/entities.md)
-- [shared/domain/errors.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/domain/errors.md)
-- [shared/domain/value-objects.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/domain/value-objects.md)
+- [shared/domain/value-objects/errors.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/domain/errors.md)
+- [shared/domain/value-objects](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/domain/value-objects.md)
