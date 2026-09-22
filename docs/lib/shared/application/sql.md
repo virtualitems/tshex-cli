@@ -1,19 +1,90 @@
 ### `lib/shared/application/sql.ts`
 
-`SqlParamsBuilder` derives parameterized SQL fragments from a plain record. It
-returns fields, placeholders, and values for inserts, updates, and where
-conditions.
+`SqlParamsBuilder` converts a plain record into the ordered SQL fragments and
+bound values required by a query. It prepares parameters for `INSERT`,
+`UPDATE`, and `WHERE` clauses. It does not execute SQL or create complete SQL
+statements.
 
-#### Build an INSERT binding
+#### Current implementation
+
+The following code is the current implementation of `SqlParamsBuilder` and its
+parameter contracts.
 
 ```ts
-const params = new SqlParamsBuilder().insert({ email: 'ada@example.com' })
+export type SqlRecord = Record<string, null | string | number | boolean>
 
-params
-// { fields: ['email'], placeholders: ['?'], values: ['ada@example.com'] }
+export interface SqlInsertParams {
+    fields: string[]
+    placeholders: string[]
+    values: unknown[]
+}
+
+export interface SqlUpdateParams {
+    placeholders: string[]
+    values: unknown[]
+}
+
+export interface SqlWhereParams {
+    placeholders: string[]
+    values: unknown[]
+}
+
+export class SqlParamsBuilder {
+    public constructor(
+        private readonly placeholder: string = '?'
+    ) {}
+
+    public insert(data: SqlRecord): SqlInsertParams {
+        const fields: string[] = []
+        const placeholders: string[] = []
+        const values: unknown[] = []
+
+        for (const [field, value] of Object.entries(data)) {
+            fields.push(field)
+            values.push(value)
+            placeholders.push(this.placeholder)
+        }
+
+        return { fields, placeholders, values }
+    }
+
+    public update(data: SqlRecord): SqlUpdateParams {
+        const placeholders: string[] = []
+        const values: unknown[] = []
+
+        for (const [field, value] of Object.entries(data)) {
+            values.push(value)
+
+            placeholders.push(`${field} = ${this.placeholder}`)
+        }
+
+        return { placeholders, values }
+    }
+
+    public where(data: SqlRecord): SqlWhereParams {
+        const placeholders: string[] = []
+        const values: unknown[] = []
+
+        for (const [field, value] of Object.entries(data)) {
+            values.push(value)
+
+            placeholders.push(`${field} = ${this.placeholder}`)
+        }
+
+        return { placeholders, values }
+    }
+}
 ```
 
-The default placeholder is `?`, and the constructor accepts another literal
-token. The builder neither executes SQL nor quotes table and field names.
-Drivers that require incrementing placeholder numbers need a compatible builder
-or a transformation step.
+#### Example
+
+The following input produces the fragments required for an `INSERT` binding.
+
+```ts
+const data: SqlRecord = { email: 'ada@example.com' }
+const sqlParamsBuilder = new SqlParamsBuilder()
+const params = sqlParamsBuilder.insert(data)
+
+// result: { fields: ['email'], placeholders: ['?'], values: ['ada@example.com'] }
+// usage:  run(`INSERT INTO users (${params.fields.join(', ')}) VALUES (${params.placeholders.join(', ')})`, params.values)
+```
