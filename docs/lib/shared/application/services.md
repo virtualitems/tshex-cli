@@ -1,16 +1,36 @@
 ### `lib/shared/application/services.ts`
 
-`Service` is an empty abstract base class for an application operation.
+An application service groups operations that belong to the same application
+boundary. Consumers use the service as one operational identity when they need
+that group of related operations.
 
-#### Name an application operation
+#### Current implementation
+
+The following code is the current `Service` implementation.
 
 ```ts
-class RefreshCatalog extends Service {
-    public execute(): void {
-        // coordinate the catalog refresh operation
-    }
+export abstract class Service {
+    [property: string]: unknown
 }
 ```
 
-The base class does not define an `execute()` method, dependencies, a
-transaction boundary, or a result type. The concrete service owns that contract.
+The base service declares no methods. Each concrete service defines the methods
+that execute the use-case operations within its operational boundary.
+
+#### Example
+
+The following service groups the CRUD operations for students
+
+```ts
+abstract class StudentsService extends Service {
+
+  public abstract create(student: Student): Student
+
+  public abstract list(): Student[]
+
+  public abstract update(student: Student, data: Partial<Student>): Student
+
+  public abstract delete(student: Student): Student
+
+}
+```
