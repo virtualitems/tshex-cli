@@ -1,13 +1,12 @@
 ### `lib/shared/application/regex.ts`
 
-`ID_PATTERN` and `UUID_PATTERN` define the string formats that the application
-recognizes as an identifier or a UUID. The patterns validate a string shape;
-they do not query data or convert a matching value to another type.
+This module centralizes the regular expressions that the application uses to
+recognize and validate string formats. Each expression validates a string
+shape; it does not query data or convert a matching value to another type.
 
 #### Current implementation
 
-The following code is the current implementation of `ID_PATTERN` and
-`UUID_PATTERN`.
+The following code is the current module implementation.
 
 ```ts
 export const ID_PATTERN = /^\d+$/
