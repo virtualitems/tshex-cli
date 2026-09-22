@@ -1,18 +1,29 @@
 ### `lib/shared/application/regex.ts`
 
-`regex.ts` exports `ID_PATTERN` for decimal identifiers and `UUID_PATTERN` for
-UUID versions one through five.
+`ID_PATTERN` and `UUID_PATTERN` define the string formats that the application
+recognizes as an identifier or a UUID. The patterns validate a string shape;
+they do not query data or convert a matching value to another type.
 
-#### Validate complete identifiers
+#### Current implementation
+
+The following code is the current implementation of `ID_PATTERN` and
+`UUID_PATTERN`.
 
 ```ts
-ID_PATTERN.test('204')
-// true
+export const ID_PATTERN = /^\d+$/
 
-UUID_PATTERN.test('550e8400-e29b-41d4-a716-446655440000')
-// true
+export const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 ```
 
-Both expressions match the full input because they use start and end anchors.
-They validate a string shape only; they do not perform database lookups or
-convert a matching value to another type.
+#### Example
+
+Use `ID_PATTERN` to validate a decimal identifier and `UUID_PATTERN` to
+validate a UUID from version one through five. Both patterns match the complete
+input because they use start and end anchors.
+
+```ts
+const isID = ID_PATTERN.test('204')
+const isUUID = UUID_PATTERN.test('550e8400-e29b-41d4-a716-446655440000')
+```
+
+`isID` and `isUUID` are `true` for these inputs.
