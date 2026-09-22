@@ -1,19 +1,48 @@
 ### `lib/shared/application/validations.ts`
 
-`Validatable` is an interface for an object that reports its validation state
-through `isValid()`.
+Validation determines whether an application input can continue through a use
+case. Each input defines its own validity conditions and exposes the resulting
+decision through `Validatable`.
 
-#### Validate application input
+#### Current implementation
+
+The following code is the current implementation of `Validatable`.
 
 ```ts
-class CreateUserInput implements Validatable {
-    public constructor(public readonly name: string) {}
-
-    public isValid(): boolean {
-        return this.name.trim() !== ''
-    }
+export interface Validatable {
+    isValid(): boolean
 }
 ```
 
-The interface returns only a Boolean. It does not define error messages,
-validation order, asynchronous checks, or normalization.
+#### Example
+
+A request validator receives a standard `Request` and delegates each validation
+to a specialized validator. `isValid()` combines the validator results.
+
+```ts
+interface RequestPartValidator {
+  isValid(request: Request): boolean
+}
+
+class RequestValidator implements Validatable {
+  public constructor(
+    public readonly request: Request
+  ) {}
+
+  protected validateHeaders(request: Request): boolean {}
+
+  protected validateBody(request: Request): boolean {}
+
+  public isValid(): boolean {
+    if (this.validateHeaders(this.request) === false) {
+      return false
+    }
+
+    if (this.validateBody(this.request) === false) {
+      return false
+    }
+
+    return true
+  }
+}
+```
