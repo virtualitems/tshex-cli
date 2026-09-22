@@ -1,19 +1,27 @@
 ### `lib/shared/domain/aggregates.ts`
 
-`Aggregate` is an empty abstract base class for a domain object that owns a
-consistency boundary across related entities and value objects.
+An aggregate defines a unit of domain behavior that involves multiple entities.
+It contains the operations and rules required to coordinate those entities and
+complete one domain operation. An aggregate does not represent a domain entity.
 
-#### Aggregate operations
+#### Current implementation
 
-Extend `Aggregate` when one operation must coordinate several domain parts.
+The following code is the current `Aggregate` implementation.
 
 ```ts
-class Order extends Aggregate {
-    public confirm(): void {
-        // enforce the order's consistency rules
-    }
+export abstract class Aggregate {
+    [property: string]: unknown
 }
 ```
 
-The base class does not provide persistence, identity, validation, or
-transaction handling. The concrete aggregate defines those domain rules.
+#### Example
+
+Use an aggregate when a student and a course must be coordinated to create an
+enrollment. The aggregate receives both entities and returns the enrollment
+that represents their relationship.
+
+```ts
+class EnrollmentAggregate extends Aggregate {
+  public enroll(student: Student, course: Course): Enrollment {}
+}
+```
