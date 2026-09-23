@@ -58,10 +58,10 @@
 - `<context>/api/`
 - `<context>/assets/`
 - `<context>/components/`
-- `<context>/core/`
 - `<context>/hooks/`
 - `<context>/languages/`
 - `<context>/schemas/`
+- `<context>/styles/`
 
 #### Files
 
