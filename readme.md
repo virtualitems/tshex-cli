@@ -39,7 +39,7 @@ npx tshex --help
 Create a project directory with the shared and type contexts:
 
 ```bash
-npx tshex --project core
+npx tshex -P core
 ```
 
 The project template creates this structure:
@@ -58,16 +58,18 @@ and mechanisms. `types` contains reusable TypeScript declarations.
 
 ## Create a context
 
+A context groups the rules and operations of an application capability. `users`, `sales`, `billing`, and `inventory` are examples of contexts.
+
 Create a context in the current directory:
 
 ```bash
-npx tshex --context users
+npx tshex -C users
 ```
 
 Create a project and its first context in one command:
 
 ```bash
-npx tshex --project core --context users
+npx tshex -P core -C users
 ```
 
 The context becomes a sibling of `shared` and `types`:
@@ -88,7 +90,7 @@ core/
 Use `--dir` to choose the destination directory:
 
 ```bash
-npx tshex --dir ./src --project core --context users
+npx tshex --dir ./src -P core -C users
 ```
 
 The command creates the project at `src/core`.
@@ -98,12 +100,10 @@ The command creates the project at `src/core`.
 Create a React context with `--react` and `--context`:
 
 ```bash
-npx tshex --context users --react
+npx tshex -C users --react
 ```
 
-A React context consumes capabilities for a user interface. It organizes the
-modules that render the interface, expose interface behavior, define data
-contracts, localize text, and provide static resources.
+A React context is a consumer by nature. It does not provide a hexagonal capability to other systems. Instead, it consumes existing capabilities and organizes that consumption as a collection of adapters for the UI layer.
 
 ```text
 users/
@@ -117,23 +117,31 @@ users/
 `-- styles/
 ```
 
+This layout is intentionally different from the default context template. The standard context separates `domain`, `application`, and `adapters` because it models and provides a capability. The React context generated with `--react` assumes the opposite role: it always consumes capabilities and groups the code around the adapters required by that consumption.
+
 ## Create tests
 
 Create a test structure that mirrors the TypeScript files in an existing source
 directory:
 
 ```bash
-npx tshex --tests ./core
+npx tshex -T ./core
 ```
 
-The command creates or reuses a `tests/` directory in the current directory.
+This command helps you prepare a tests workspace that follows the shape of your source directory while fitting naturally into the place where you are working. You can use it in the current directory for a quick setup, or combine it with `--dir` when you want the tests structure to be created somewhere else. If `tests/` already contains content, the command continues working with what is already there instead of interrupting your flow.
+
 Use `--dir` to place that directory elsewhere:
 
 ```bash
-npx tshex --tests ./core --dir ./output
+npx tshex -T ./core --dir ./output
 ```
 
 ## Documentation
+
+From this point on, the guide is split into dedicated documents under `docs/`.
+The `docs/lib/`, `docs/ctx/`, `docs/ctx-react/`, and `docs/tests/` directories
+mirror the generated template paths. Each template file has a Markdown document
+at the corresponding path.
 
 ### General
 
