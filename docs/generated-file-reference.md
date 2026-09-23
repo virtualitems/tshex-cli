@@ -55,7 +55,6 @@
 
 #### Directories
 
-- `<context>/api/`
 - `<context>/assets/`
 - `<context>/components/`
 - `<context>/hooks/`

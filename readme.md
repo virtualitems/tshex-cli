@@ -107,7 +107,6 @@ contracts, localize text, and provide static resources.
 
 ```text
 users/
-|-- api/
 |-- assets/
 |-- components/
 |-- hooks/
