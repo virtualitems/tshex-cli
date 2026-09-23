@@ -1,6 +1,10 @@
 ### Project contexts
 
-The project directory contains contexts. A context is a directory that encapsulates modules related to a specific capability or shared concern. Creating a project adds the `shared` and `types` contexts. Creating a context adds another context directory beside them. A context groups the code that supports one capability or one shared concern. It owns the vocabulary, types, and operations required for that concern, and it includes only the layers it needs.
+The project directory organizes code into contexts. A context is a directory
+that groups the modules for one capability or shared concern. It owns the
+vocabulary, types, and operations required for that concern, and it includes
+only the layers it needs. Creating a project adds the `shared` and `types`
+contexts. Creating a context adds another context directory beside them.
 
 ```
 project/
@@ -21,6 +25,11 @@ business capability in that capability's context instead.
 `types` is also a context. It provides reusable TypeScript declarations, such
 as JSON, locale, time-zone, and generic object types. It has no domain or
 application behavior because its responsibility is limited to type contracts.
+
+The project template also creates `main.ts` as an entry-point placeholder.
+Creating a context adds a sibling directory with `domain`, `application`, and
+`adapters` directories, plus `example.ts` at the context root. Replace or
+remove `example.ts` when the context exposes its first port.
 
 #### Domain
 
@@ -47,3 +56,14 @@ Provide an adapter's configuration when the context constructs the adapter,
 preferably through its constructor. This keeps configuration out of the
 adapter implementation and allows the same adapter type to operate with
 different configuration values.
+
+#### Allowed imports and dependency direction
+
+A root port module exposes a context capability and composes the context during
+bootstrap. It creates configured adapters and passes them to application
+services. Only a port module may import `env.ts`.
+
+Port modules may import only application and adapter modules. Adapter modules
+may import only other port modules or third-party libraries. Application
+modules may import only domain and application modules.
+Domain modules may import only domain modules.
