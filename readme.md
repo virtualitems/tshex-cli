@@ -16,103 +16,66 @@ The goal is to separate the domain code from installed dependencies. A Hexagonal
 
 ### Installation
 
-Install the package in your Node.js project:
+Install the package in a project:
 
 ```bash
 npm install tshex-cli
 ```
 
-Or install it globally:
+Or install the executable globally:
 
 ```bash
 npm install -g tshex-cli
 ```
 
-The package registers the `tshex` executable. You can invoke it with `npx` from the project directory.
-
-### Help
-
-View the available commands and options with:
+View the available options with:
 
 ```bash
 npx tshex --help
 ```
 
-### Create a project
+## Create a project
 
-The `--project` option receives the name of the project's root directory:
+Create a project directory with the shared and type contexts:
 
 ```bash
 npx tshex --project core
 ```
 
-You can also use the short form:
-
-```bash
-npx tshex -P core
-```
-
-In this example, `core` will contain the shared code, the contexts, and the project's main implementation.
-
-### Create a context
-
-The `--context` option receives the context name:
-
-```bash
-npx tshex --context users
-```
-
-You can also use the short form:
-
-```bash
-npx tshex -C users
-```
-
-A context groups the rules and operations of an application capability. `users`, `sales`, `billing`, and `inventory` are examples of contexts.
-
-### Create the project and the first context
-
-You can generate both components in a single execution:
-
-```bash
-npx tshex --project core --context users
-```
-
-The command creates this structure:
+The project template creates this structure:
 
 ```text
 core/
 |-- main.ts
 |-- shared/
 |   |-- application/
-|   |   |-- data/
-|   |   |   |-- drivers.ts
-|   |   |   |-- managers.ts
-|   |   |   `-- repositories.ts
-|   |   |-- adapters/
-|   |   |   `-- env.ts
-|   |   |-- events.ts
-|   |   |-- http/
-|   |   |   `-- errors.ts
-|   |   |-- loggers.ts
-|   |   |-- providers.ts
-|   |   |-- regex.ts
-|   |   |-- services.ts
-|   |   |-- sql.ts
-|   |   `-- validations.ts
 |   `-- domain/
-|       |-- aggregates.ts
-|       |-- entities.ts
-|       `-- value-objects/
-|           |-- booleans.ts
-|           |-- errors.ts
-|           |-- strings.ts
-|           `-- values.ts
+`-- types/
+```
+
+`main.ts` is an entry-point placeholder. `shared` contains reusable concepts
+and mechanisms. `types` contains reusable TypeScript declarations.
+
+## Create a context
+
+Create a context in the current directory:
+
+```bash
+npx tshex --context users
+```
+
+Create a project and its first context in one command:
+
+```bash
+npx tshex --project core --context users
+```
+
+The context becomes a sibling of `shared` and `types`:
+
+```text
+core/
+|-- shared/
 |-- types/
-|   |-- json.d.ts
-|   |-- locales.d.ts
-|   |-- objects.d.ts
-|   `-- timezones.d.ts
 `-- users/
     |-- adapters/
     |-- application/
@@ -120,154 +83,102 @@ core/
     `-- example.ts
 ```
 
-### Choose the destination directory
+`example.ts` is the generated root port placeholder. Replace or remove it.
 
-The `--dir` option specifies the directory from which the structure is created:
+Use `--dir` to choose the destination directory:
 
 ```bash
 npx tshex --dir ./src --project core --context users
 ```
 
-The example project is created at `src/core`.
+The command creates the project at `src/core`.
 
-To add a context to an existing project, use the project as the destination directory:
+## Create a React context
 
-```bash
-npx tshex --dir ./core --context billing
-```
-
-The context is created at `core/billing`.
-
-### Create a context for React
-
-The `--react` option creates a context intended for a React application.
-
-A React context is a consumer by nature. It does not provide a hexagonal capability to other systems. Instead, it consumes existing capabilities and organizes that consumption as a collection of adapters for the UI layer.
-
-Use this mode when the generated context will call APIs, validate interface data, expose hooks, compose components, and localize messages.
+Create a React context with `--react` and `--context`:
 
 ```bash
 npx tshex --context users --react
 ```
 
-You can also use its short form:
-
-```bash
-npx tshex -C users -R
-```
-
-The command creates this structure:
+A React context consumes capabilities for a user interface. It organizes the
+modules that render the interface, expose interface behavior, define data
+contracts, localize text, and provide static resources.
 
 ```text
 users/
 |-- api/
 |-- assets/
 |-- components/
-|-- core/
 |-- hooks/
 |-- languages/
 |   |-- en.json
 |   `-- es.json
-`-- schemas/
+|-- schemas/
+`-- styles/
 ```
 
-Each directory represents a consumption adapter or a resource used by those adapters:
+## Create tests
 
-| Directory | Responsibility |
-| --- | --- |
-| `api/` | Adapters that call external services or backend contexts. |
-| `assets/` | Static resources used by the React context. |
-| `components/` | Visual react adapters that render the consumed capability. |
-| `core/` | Local support code and project modules adapters shared by the adapters in this context. |
-| `hooks/` | React hook adapters that expose behavior to components. |
-| `languages/` | Translation resources for the interface. Can be json, ts files, etc. |
-| `schemas/` | Validation and parsing adapters for UI input and output. |
-
-This layout is intentionally different from the default context template. The standard context separates `domain`, `application`, and `adapters` because it models and provides a capability. The React context generated with `--react` assumes the opposite role: it always consumes capabilities and groups the code around the adapters required by that consumption.
-
-### Create a tests structure
-
-The `--tests` option receives a source directory and creates a matching tests structure.
+Create a test structure that mirrors the TypeScript files in an existing source
+directory:
 
 ```bash
 npx tshex --tests ./core
 ```
 
-You can also use the short form:
+The command creates or reuses a `tests/` directory in the current directory.
+Use `--dir` to place that directory elsewhere:
 
 ```bash
-npx tshex -T ./core
+npx tshex --tests ./core --dir ./output
 ```
 
-The command creates the output inside a `tests/` directory. If `tests/` does not exist, the CLI asks whether it should be created.
-
-By default, the `tests/` directory is resolved from the current execution directory:
-
-```bash
-npx tshex -T ./core
-```
-
-This generates a structure like this:
-
-```text
-tests/
-`-- core/
-    |-- users/
-    |   |-- adapters/
-    |   |-- application/
-    |   |   `-- create-user.ts
-    |   `-- domain/
-    `-- billing/
-        |-- application/
-        `-- domain/
-```
-
-To choose another base directory for `tests/`, combine `--tests` with `--dir`:
-
-```bash
-npx tshex -T ./core --dir ./output
-```
-
-That command creates or reuses `./output/tests/`.
-
-This command helps you prepare a tests workspace that follows the shape of your source directory while fitting naturally into the place where you are working. You can use it in the current directory for a quick setup, or combine it with `--dir` when you want the tests structure to be created somewhere else. If `tests/` already contains content, the command continues working with what is already there instead of interrupting your flow.
-
-## Documentation index
-
-From this point on, the guide is split into dedicated documents under `docs/`.
-The `docs/lib/`, `docs/ctx/`, `docs/ctx-react/`, and `docs/tests/` directories
-mirror the generated template paths. Each template file has a Markdown document
-at the corresponding path.
+## Documentation
 
 ### General
 
-- [Project structure](https://github.com/virtualitems/tshex-cli/blob/main/docs/library-structure.md)
-- [Context ports](https://github.com/virtualitems/tshex-cli/blob/main/docs/context-ports.md)
-- [Generated file reference](https://github.com/virtualitems/tshex-cli/blob/main/docs/generated-file-reference.md)
+- [Library contexts](docs/lib/readme.md)
+- [Context ports](docs/ctx/ports.md)
+- [Generated file reference](docs/generated-file-reference.md)
 
-### Types
+### Shared types
 
-- [types/objects.d.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/types/objects.md)
-- [types/json.d.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/types/json.md)
-- [types/locales.d.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/types/locales.md)
-- [types/timezones.d.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/types/timezones.md)
-
-### Shared application
-
-- [shared/application/data](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/data.md)
-- [shared/application/adapters/env.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/adapters/env.md)
-- [shared/application/events.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/events.md)
-- [shared/application/http/errors.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/http/errors.md)
-- [shared/application/loggers.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/loggers.md)
-- [shared/application/providers.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/providers.md)
-- [shared/application/regex.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/regex.md)
-- [shared/application/services.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/services.md)
-- [shared/application/sql.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/sql.md)
-- [shared/application/validations.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/application/validations.md)
+- [JSON types](docs/lib/types/json.md)
+- [Locale types](docs/lib/types/locales.md)
+- [Object types](docs/lib/types/objects.md)
+- [Time-zone types](docs/lib/types/timezones.md)
 
 ### Shared domain
 
-- [shared/domain/aggregates.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/domain/aggregates.md)
-- [shared/domain/entities.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/domain/entities.md)
-- [shared/domain/value-objects/errors.ts](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/domain/errors.md)
-- [shared/domain/value-objects](https://github.com/virtualitems/tshex-cli/blob/main/docs/shared/domain/value-objects.md)
+- [Aggregates](docs/lib/shared/domain/aggregates.md)
+- [Entities](docs/lib/shared/domain/entities.md)
+- [Value objects](docs/lib/shared/domain/value-objects.md)
+
+### Shared application
+
+- [Environment adapter](docs/lib/shared/application/adapters/env.md)
+- [Data drivers](docs/lib/shared/application/data/drivers.md)
+- [Data managers](docs/lib/shared/application/data/managers.md)
+- [Repositories](docs/lib/shared/application/data/repositories.md)
+- [Events](docs/lib/shared/application/events.md)
+- [HTTP errors](docs/lib/shared/application/http/errors.md)
+- [Loggers](docs/lib/shared/application/loggers.md)
+- [Providers](docs/lib/shared/application/providers.md)
+- [Regular expressions](docs/lib/shared/application/regex.md)
+- [Services](docs/lib/shared/application/services.md)
+- [SQL parameters](docs/lib/shared/application/sql.md)
+- [Validations](docs/lib/shared/application/validations.md)
+
+### React context directories
+
+- [Assets](docs/ctx-react/assets.md)
+- [Components](docs/ctx-react/components.md)
+- [Hooks](docs/ctx-react/hooks.md)
+- [Languages](docs/ctx-react/languages.md)
+- [Schemas](docs/ctx-react/schemas.md)
+- [Styles](docs/ctx-react/styles.md)
+
+### Tests
+
+- [Test content](docs/tests/content.md)
