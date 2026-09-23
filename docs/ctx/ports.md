@@ -3,17 +3,11 @@
 A context port module defines the communication surface available at a context
 boundary. A port module instantiates the adapters the context requires, injects
 those adapters as dependencies into the application services that consume them,
-and exposes classes, functions, or constants that other modules can import and
+and exposes interfaces, classes, functions, or constants that other modules can import and
 integrate. Each exported element represents a wired application capability the
 context makes available beyond its own boundary.
 
-In practice a port is a specific boundary element with identity: a command
-handler, a query entry point, an event consumer, a published endpoint, or
-another concrete interaction mechanism that the running system exposes.
-
-Types and interfaces support the port definition but are secondary to the
-exported elements. The primary concern is the concrete surface that another
-module can import and call.
+In practice a port is a specific interaction mechanism that the context exposes. Types and interfaces support the port definition but are secondary to the exported elements. The primary concern is the concrete surface that another module can import and call.
 
 > **Hint**
 > The generated `example.ts` file is only a placeholder. Replace it when
