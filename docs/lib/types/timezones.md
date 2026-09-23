@@ -1,17 +1,28 @@
 ### `lib/types/timezones.d.ts`
 
-`timezones.d.ts` declares `TimeZone` as the IANA time-zone identifier union
-included in the template.
+This module constrains time-zone values to the IANA identifiers included in the
+template. The union applies at compile time. It does not convert dates, apply
+offsets, or verify the time-zone database available at runtime.
 
-#### Constrain time-zone fields
+#### Current implementation
+
+`timezones.d.ts` contains the complete generated union. The following excerpt
+shows its form; the source file contains every included identifier.
+
+```ts
+export type TimeZone =
+    | 'Africa/Abidjan'
+    | 'Africa/Accra'
+    | 'Africa/Addis_Ababa'
+    | 'Africa/Algiers'
+    | 'Africa/Asmara'
+    ...
+```
+
+#### Example
 
 Use `TimeZone` when an API or configuration accepts an IANA zone name.
 
 ```ts
 const timeZone: TimeZone = 'America/Bogota'
 ```
-
-#### Runtime time-zone handling
-
-The union constrains TypeScript values only. It does not convert dates, apply
-offsets, or verify the time-zone database available in the running environment.

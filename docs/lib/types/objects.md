@@ -1,18 +1,23 @@
 ### `lib/types/objects.d.ts`
 
-`objects.d.ts` declares `Generic<T>`, a string-keyed record whose values have
-type `T`.
+This module provides general object types for application code. The types
+describe object shapes at compile time and do not validate values at runtime.
 
-#### Generic maps
+#### Current implementation
 
-Use `Generic<User>` when a function accepts an object with arbitrary string
-keys and `User` values.
+The following code is the current module implementation.
+
+```ts
+export type Generic<T = unknown> = Record<string, T>
+```
+
+#### Example
+
+Use `Generic<T>` when a function accepts an object with arbitrary string keys
+and values of one type.
 
 ```ts
 const users: Generic<{ id: number }> = { primary: { id: 204 } }
 ```
 
-#### Known key sets
-
-`Generic<T>` does not require named keys and does not validate values at
-runtime. Use an interface or a specific object type when the key set is known.
+Use an interface or a specific object type when the key set is known.

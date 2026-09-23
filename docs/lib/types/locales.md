@@ -1,9 +1,25 @@
 ### `lib/types/locales.d.ts`
 
-`locales.d.ts` declares `Locale` as the Unicode CLDR 48.2.1 locale identifier
-union included in the template.
+This module constrains locale values to the Unicode CLDR 48.2.1 identifiers
+included in the template. The union applies at compile time. It does not
+normalize locale strings or verify runtime locale support.
 
-#### Constrain locale fields
+#### Current implementation
+
+`locales.d.ts` contains the complete generated union. The following excerpt
+shows its form; the source file contains every included identifier.
+
+```ts
+export type Locale =
+    | 'aa'
+    | 'aa-DJ'
+    | 'aa-ER'
+    | 'ab'
+    | 'af'
+    ...
+```
+
+#### Example
 
 Use `Locale` to restrict a configuration or API field to one of the declared
 locale identifiers.
@@ -11,8 +27,3 @@ locale identifiers.
 ```ts
 const locale: Locale = 'es-CO'
 ```
-
-#### Source and runtime support
-
-The union reflects the generated CLDR version. It does not check the user's
-runtime locale support or normalize locale strings.
