@@ -1,5 +1,3 @@
-export const env: Record<string, string> = {}
-
 function required(env: Record<string, string>, key: string): string {
     if (Object.hasOwn(env, key) === false) {
         throw new Error(`Environment variable "${key}" is required`)
