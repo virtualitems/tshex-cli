@@ -52,10 +52,22 @@ technology-specific concern and receives its configuration during context
 bootstrap. Application services receive adapters as dependencies, which keeps
 the application and domain layers independent of a particular technology.
 
+Adapters must remain generic with respect to the context that uses them. An
+adapter defines how to interact with a technology, not what that interaction
+means to a particular business capability. It must not encode context-specific
+names, rules, defaults, or branching behavior.
+
+The context gives an adapter its meaning by configuring it during bootstrap.
+Configuration binds the adapter's generic mechanism to a context-specific use.
+For example, a generic storage adapter may receive a table name, namespace, or
+serialization strategy; those values determine how that adapter participates
+in the context without making the adapter aware of the context itself.
+
 Provide an adapter's configuration when the context constructs the adapter,
-preferably through its constructor. This keeps configuration out of the
-adapter implementation and allows the same adapter type to operate with
-different configuration values.
+preferably through its constructor. Keep configuration values and contextual
+decisions at the composition boundary rather than inside the adapter. The same
+adapter type should be usable by different contexts by supplying different
+configuration.
 
 #### Allowed imports and dependency direction
 
