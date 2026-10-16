@@ -36,4 +36,8 @@ export class AsyncState<T = unknown> {
         this.current = this.current.then(updater)
         return await this.current
     }
+
+    public async catch(onrejected: (reason: unknown) => Promise<never>) {
+        return await this.current.catch(onrejected)
+    }
 }
