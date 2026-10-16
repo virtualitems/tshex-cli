@@ -1,20 +1,19 @@
 export class State<T = unknown> {
     current: Promise<Awaited<T>>
 
-    constructor(initial: T) {
+    public constructor(initial: T) {
         this.current = Promise.resolve(initial)
     }
 
-    set(value: T) {
+    public set(value: T) {
         this.current = Promise.resolve(value)
         return this.current
     }
 
-    update(
-        onfulfilled: (previous: Awaited<T>) => Awaited<T>,
-        onrejected: undefined | ((reason: unknown) => Awaited<T>)
+    public update(
+        onfulfilled: (previous: Awaited<T>) => Awaited<T>
     ) {
-        this.current = this.current.then(onfulfilled, onrejected)
+        this.current = this.current.then(onfulfilled)
         return this.current
     }
 }
