@@ -25,15 +25,15 @@ export class AsyncState<T = unknown> {
         this.current = Promise.resolve(initial)
     }
 
-    public set(value: T) {
+    public async set(value: T) {
         this.current = Promise.resolve(value)
-        return this.current
+        return await this.current
     }
 
-    public update(
+    public async update(
         updater: (previous: Awaited<T>) => Awaited<T>
     ) {
         this.current = this.current.then(updater)
-        return this.current
+        return await this.current
     }
 }
