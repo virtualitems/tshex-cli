@@ -6,7 +6,7 @@ type StateAction = typeof SET_ACTION | typeof UPDATE_ACTION
 
 type StateUpdater<T> = (previousValue: T) => T
 
-type StateQueueItem<T> =
+type StateEvent<T> =
     | {
         action: typeof SET_ACTION
         details: [T]
@@ -16,9 +16,9 @@ type StateQueueItem<T> =
         details: [StateUpdater<T>]
     }
 
-export class StateQueue<T> {
+export class State<T> {
     private valueState: T
-    private queue: StateQueueItem<T>[] = []
+    private queue: StateEvent<T>[] = []
 
     public constructor(value: T) {
         this.valueState = value
@@ -69,11 +69,9 @@ export class StateQueue<T> {
         action: StateAction,
         ...details: [T] | [StateUpdater<T>]
     ): void {
-        const isIdle = this.queue.length === 0
+        this.queue.push({ action, details } as StateEvent<T>)
 
-        this.queue.push({ action, details } as StateQueueItem<T>)
-
-        if (isIdle === true) {
+        if (this.queue.length === 0) {
             this.consume()
         }
     }
